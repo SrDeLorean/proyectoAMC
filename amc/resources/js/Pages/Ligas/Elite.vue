@@ -21,6 +21,7 @@ const resultadosElite = [
   // Más resultados...
 ];
 
+
 </script>
 
 <template>
