@@ -98,25 +98,67 @@ const pasesPlayers = [
 <template>
   <WelcomeLayout>
     <template #default>
-      <div class="space-y-8 max-w-3xl mx-auto py-8">
-        <EstadisticasJugador
-          title="Goles"
-          :players="golesPlayers"
-          backgroundColor="#ff003c"
-          clubLogo="/images/psg-logo.png"
-        />
-        <EstadisticasJugador
-          title="Asistencias"
-          :players="asistenciasPlayers"
-          backgroundColor="#0099ff"
-          clubLogo="/images/manchester-city-logo.png"
-        />
-        <EstadisticasJugador
-          title="Pases"
-          :players="pasesPlayers"
-          backgroundColor="#00cc66"
-          clubLogo="/images/real-madrid-logo.png"
-        />
+      <div class="py-8 px-4">
+        <div
+          class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 max-w-7xl mx-auto"
+        >
+          <EstadisticasJugador
+            title="Goles"
+            :players="golesPlayers"
+            backgroundColor="#ff003c"
+            clubLogo="/images/psg-logo.png"
+          />
+          <EstadisticasJugador
+            title="Asistencias"
+            :players="asistenciasPlayers"
+            backgroundColor="#0099ff"
+            clubLogo="/images/manchester-city-logo.png"
+          />
+          <EstadisticasJugador
+            title="Disparos al arco"
+            :players="pasesPlayers"
+            backgroundColor="#00cc66"
+            clubLogo="/images/real-madrid-logo.png"
+          />
+
+          <EstadisticasJugador
+            title="Disparos al palo"
+            :players="golesPlayers"
+            backgroundColor="#ff003c"
+            clubLogo="/images/psg-logo.png"
+          />
+          <EstadisticasJugador
+            title="Velocidad maxima"
+            :players="asistenciasPlayers"
+            backgroundColor="#0099ff"
+            clubLogo="/images/manchester-city-logo.png"
+          />
+          <EstadisticasJugador
+            title="AutoGoles"
+            :players="pasesPlayers"
+            backgroundColor="#00cc66"
+            clubLogo="/images/real-madrid-logo.png"
+          />
+
+          <EstadisticasJugador
+            title="Penales"
+            :players="golesPlayers"
+            backgroundColor="#ff003c"
+            clubLogo="/images/psg-logo.png"
+          />
+          <EstadisticasJugador
+            title="Duelos Ganados"
+            :players="asistenciasPlayers"
+            backgroundColor="#0099ff"
+            clubLogo="/images/manchester-city-logo.png"
+          />
+          <EstadisticasJugador
+            title="Tarjetas"
+            :players="pasesPlayers"
+            backgroundColor="#00cc66"
+            clubLogo="/images/real-madrid-logo.png"
+          />
+        </div>
       </div>
     </template>
   </WelcomeLayout>
