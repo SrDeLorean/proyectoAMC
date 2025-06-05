@@ -17,7 +17,6 @@ const form = useForm({
 
 const confirmUserDeletion = () => {
     confirmingUserDeletion.value = true;
-
     nextTick(() => passwordInput.value.focus());
 };
 
@@ -32,77 +31,73 @@ const deleteUser = () => {
 
 const closeModal = () => {
     confirmingUserDeletion.value = false;
-
     form.clearErrors();
     form.reset();
 };
 </script>
 
 <template>
-    <section class="space-y-6">
-        <header>
-            <h2 class="text-lg font-medium text-gray-900">
-                Delete Account
-            </h2>
+  <section
+    class="bg-gray-900 rounded-xl shadow-lg px-6 sm:px-10 py-10 flex flex-col md:flex-row gap-10 border border-gray-800 w-full max-w-5xl mx-auto"
+  >
+    <header class="flex-1">
+      <h2 class="text-lg font-semibold text-white">Eliminar Cuenta</h2>
+      <p class="mt-1 text-sm text-gray-400">
+        Una vez eliminada tu cuenta, todos tus datos serán borrados permanentemente. Asegúrate de descargar cualquier información que desees conservar antes de continuar.
+      </p>
+    </header>
 
-            <p class="mt-1 text-sm text-gray-600">
-                Once your account is deleted, all of its resources and data will
-                be permanently deleted. Before deleting your account, please
-                download any data or information that you wish to retain.
-            </p>
-        </header>
+    <div class="flex items-start md:items-center">
+      <DangerButton
+        @click="confirmUserDeletion"
+        class="bg-red-600 hover:bg-red-700 text-white whitespace-nowrap"
+      >
+        Eliminar Cuenta
+      </DangerButton>
+    </div>
 
-        <DangerButton @click="confirmUserDeletion">Delete Account</DangerButton>
+    <Modal :show="confirmingUserDeletion" @close="closeModal">
+      <div class="p-6 bg-gray-900 rounded-xl text-white max-w-md mx-auto">
+        <h2 class="text-lg font-semibold">
+          ¿Estás seguro de que deseas eliminar tu cuenta?
+        </h2>
 
-        <Modal :show="confirmingUserDeletion" @close="closeModal">
-            <div class="p-6">
-                <h2
-                    class="text-lg font-medium text-gray-900"
-                >
-                    Are you sure you want to delete your account?
-                </h2>
+        <p class="mt-1 text-sm text-gray-400">
+          Una vez eliminada, todos tus datos serán borrados permanentemente. Ingresa tu contraseña para confirmar esta acción.
+        </p>
 
-                <p class="mt-1 text-sm text-gray-600">
-                    Once your account is deleted, all of its resources and data
-                    will be permanently deleted. Please enter your password to
-                    confirm you would like to permanently delete your account.
-                </p>
+        <div class="mt-6">
+          <InputLabel for="password" value="Contraseña" class="text-white sr-only" />
+          <TextInput
+            id="password"
+            ref="passwordInput"
+            v-model="form.password"
+            type="password"
+            class="mt-1 block w-full bg-gray-800 border border-gray-700 text-white"
+            placeholder="Contraseña"
+            @keyup.enter="deleteUser"
+          />
+          <InputError :message="form.errors.password" class="mt-2 text-red-500" />
+        </div>
 
-                <div class="mt-6">
-                    <InputLabel
-                        for="password"
-                        value="Password"
-                        class="sr-only"
-                    />
+        <div class="mt-6 flex justify-end">
+          <SecondaryButton
+            @click="closeModal"
+            class="bg-gray-700 text-white hover:bg-gray-600"
+          >
+            Cancelar
+          </SecondaryButton>
 
-                    <TextInput
-                        id="password"
-                        ref="passwordInput"
-                        v-model="form.password"
-                        type="password"
-                        class="mt-1 block w-3/4"
-                        placeholder="Password"
-                        @keyup.enter="deleteUser"
-                    />
-
-                    <InputError :message="form.errors.password" class="mt-2" />
-                </div>
-
-                <div class="mt-6 flex justify-end">
-                    <SecondaryButton @click="closeModal">
-                        Cancel
-                    </SecondaryButton>
-
-                    <DangerButton
-                        class="ms-3"
-                        :class="{ 'opacity-25': form.processing }"
-                        :disabled="form.processing"
-                        @click="deleteUser"
-                    >
-                        Delete Account
-                    </DangerButton>
-                </div>
-            </div>
-        </Modal>
-    </section>
+          <DangerButton
+            class="ml-3 bg-red-600 hover:bg-red-700 text-white"
+            :class="{ 'opacity-25': form.processing }"
+            :disabled="form.processing"
+            @click="deleteUser"
+          >
+            Confirmar Eliminación
+          </DangerButton>
+        </div>
+      </div>
+    </Modal>
+  </section>
 </template>

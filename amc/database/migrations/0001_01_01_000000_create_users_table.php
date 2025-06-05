@@ -13,13 +13,16 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name'); // Nombre completo
+            $table->string('id_ea')->nullable(); // ID de EA (opcional si deseas)
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->enum('role', ['jugador', 'entrenador', 'administrador'])->default('jugador');
+            $table->string('foto')->default('fotos/default.png'); // Ruta por defecto
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();  // <-- aquí
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

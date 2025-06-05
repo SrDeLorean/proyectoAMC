@@ -4,8 +4,9 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\EquipoController;
 
-use App\Http\Controllers\EstadisticasJugadorController;
+use App\Http\Controllers\Admin\UserController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -16,6 +17,19 @@ Route::get('/', function () {
     ]);
 });
 
+
+Route::prefix('equipos')->name('equipos.')->group(function () {
+    Route::get('/', [EquipoController::class, 'index'])->name('index');
+    Route::get('/create', [EquipoController::class, 'create'])->name('create');
+    Route::post('/', [EquipoController::class, 'store'])->name('store');
+    Route::get('/{equipo}/edit', [EquipoController::class, 'edit'])->name('edit');
+    Route::post('/{equipo}', [EquipoController::class, 'update'])->name('update');
+    Route::delete('/{equipo}', [EquipoController::class, 'destroy'])->name('destroy');
+
+    // Rutas para papelera
+    Route::get('/trashed', [EquipoController::class, 'trashed'])->name('trashed');
+    Route::post('/{id}/restore', [EquipoController::class, 'restore'])->name('restore');
+});
 /*
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
@@ -71,9 +85,22 @@ Route::middleware(['auth'])->group(function () {
     })->name('dashboard');
 
     // Dashboards con middleware de roles
+
     Route::middleware('role:administrador')->group(function () {
         Route::get('/admin/dashboard', fn () => Inertia::render('Admin/Dashboard'))->name('admin.dashboard');
+
+        // Rutas de CRUD de usuarios
+        Route::get('/admin/usuarios', [UserController::class, 'index'])->name('admin.users.index');
+        Route::get('/admin/usuarios/create', [UserController::class, 'create'])->name('admin.users.create');
+        Route::post('/admin/usuarios', [UserController::class, 'store'])->name('admin.users.store');
+
+        Route::get('/admin/usuarios/{user}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
+        Route::post('/admin/usuarios/{user}', [UserController::class, 'update'])->name('admin.users.update');
+        Route::delete('/admin/usuarios/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+        Route::get('/admin/usuarios/trashed', [UserController::class, 'trashed'])->name('admin.users.trashed');
+        Route::post('/admin/usuarios/{id}/restore', [UserController::class, 'restore'])->name('admin.users.restore');
     });
+
 
     Route::middleware('role:entrenador')->group(function () {
         Route::get('/entrenador/dashboard', fn () => Inertia::render('Entrenador/Dashboard'))->name('entrenador.dashboard');
