@@ -16,7 +16,7 @@ const form = useForm({
 })
 
 const imagePreview = ref(
-  props.user.foto ? `/storage/${props.user.foto}` : '/storage/fotos/default.png'
+  props.user.foto ? `/${props.user.foto}` : '/fotos/default.png'
 )
 
 function onFileChange(event) {
@@ -25,8 +25,8 @@ function onFileChange(event) {
 
   if (!file) {
     imagePreview.value = props.user.foto
-      ? `/storage/${props.user.foto}`
-      : '/storage/fotos/default.png'
+      ? `/${props.user.foto}`
+      : '/fotos/default.png'
     return
   }
 

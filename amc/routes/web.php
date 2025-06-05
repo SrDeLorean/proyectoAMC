@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\EquipoController;
 
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\PlantillaController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -109,6 +110,16 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:jugador')->group(function () {
         Route::get('/jugador/dashboard', fn () => Inertia::render('Jugador/Dashboard'))->name('jugador.dashboard');
     });
+});
+
+Route::prefix('admin')->name('plantillas.')->group(function() {
+    Route::get('/plantillas', [PlantillaController::class, 'index'])->name('index');
+    Route::get('/plantillas/create', [PlantillaController::class, 'create'])->name('create');
+    Route::post('/plantillas', [PlantillaController::class, 'store'])->name('store');
+    Route::get('/plantillas/{id}/edit', [PlantillaController::class, 'edit'])->name('edit');
+    Route::put('/plantillas/{id}', [PlantillaController::class, 'update'])->name('update');
+    Route::delete('/plantillas/{id}', [PlantillaController::class, 'destroy'])->name('destroy');
+    // etc
 });
 
 
