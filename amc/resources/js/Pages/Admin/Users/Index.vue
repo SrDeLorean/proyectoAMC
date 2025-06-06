@@ -1,4 +1,5 @@
 <script setup>
+import { ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import Swal from 'sweetalert2'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
@@ -6,8 +7,25 @@ import BaseTable from '@/Components/BaseTable.vue'
 
 const props = defineProps({
   users: Array,
-  success: String // <-- para el mensaje flash
+  success: String,
 })
+
+// Ref local para controlar el mensaje que se muestra
+const localSuccess = ref(props.success)
+
+// Cada vez que cambia props.success, actualizamos localSuccess y programamos limpiar después de 3s
+watch(
+  () => props.success,
+  (newVal) => {
+    localSuccess.value = newVal
+
+    if (newVal) {
+      setTimeout(() => {
+        localSuccess.value = ''
+      }, 3000)
+    }
+  }
+)
 
 const columns = [
   { label: 'ID', key: 'id' },
@@ -15,20 +33,20 @@ const columns = [
   { label: 'Foto', key: 'foto' },
   { label: 'Nombre', key: 'name' },
   { label: 'Email', key: 'email' },
-  { label: 'Rol', key: 'role' }
+  { label: 'Rol', key: 'role' },
 ]
 
 const actions = [
   {
     label: 'Editar',
     class: 'text-blue-400 hover:text-blue-600 transition',
-    actionName: 'edit'
+    actionName: 'edit',
   },
   {
     label: 'Eliminar',
     class: 'text-red-500 hover:text-red-700 transition',
-    actionName: 'delete'
-  }
+    actionName: 'delete',
+  },
 ]
 
 function onTableAction({ actionName, row }) {
@@ -43,8 +61,8 @@ function onTableAction({ actionName, row }) {
       confirmButtonColor: '#e30613',
       cancelButtonColor: '#6b7280',
       confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
-    }).then(result => {
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
       if (result.isConfirmed) {
         router.delete(`/admin/usuarios/${row.id}`)
       }
@@ -52,17 +70,16 @@ function onTableAction({ actionName, row }) {
   }
 }
 
-// Nueva función para restaurar usuario
 function restoreUser(user) {
   Swal.fire({
     title: `¿Restaurar a ${user.name}?`,
     icon: 'question',
     showCancelButton: true,
-    confirmButtonColor: '#22c55e', // verde
+    confirmButtonColor: '#22c55e',
     cancelButtonColor: '#6b7280',
     confirmButtonText: 'Sí, restaurar',
-    cancelButtonText: 'Cancelar'
-  }).then(result => {
+    cancelButtonText: 'Cancelar',
+  }).then((result) => {
     if (result.isConfirmed) {
       router.post(`/admin/usuarios/${user.id}/restore`)
     }
@@ -73,11 +90,14 @@ function restoreUser(user) {
 <template>
   <AdminLayout>
     <template #title>Usuarios</template>
-    <div class="p-6">
 
-      <!-- Mensaje flash de éxito -->
-      <div v-if="success" class="mb-4 p-3 bg-green-600 text-white rounded shadow">
-        {{ success }}
+    <div class="p-6">
+      <!-- Alerta de éxito que desaparece sola a los 3 segundos -->
+      <div
+        v-if="localSuccess"
+        class="mb-4 p-3 bg-green-600 text-white rounded shadow transition-opacity duration-500"
+      >
+        {{ localSuccess }}
       </div>
 
       <div class="flex justify-between items-center mb-6">

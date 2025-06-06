@@ -1,14 +1,57 @@
 <script setup>
-import { ref } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import CrudForm from '@/Components/Forms/CrudForm.vue'
 
 const props = defineProps({
   equipos: Array,
   jugadores: Array,
 })
 
-const form = ref({
+const equiposOptions = props.equipos.map(equipo => ({
+  value: equipo.id,
+  label: equipo.nombre,
+}))
+
+const jugadoresOptions = props.jugadores.map(jugador => ({
+  value: jugador.id,
+  label: jugador.name,
+}))
+
+const fields = [
+  {
+    name: 'id_equipo',
+    label: 'Equipo',
+    type: 'select',
+    placeholder: 'Seleccione un equipo',
+    required: true,
+    optionsKey: 'equiposOptions',
+  },
+  {
+    name: 'id_jugador',
+    label: 'Jugador',
+    type: 'select',
+    placeholder: 'Seleccione un jugador',
+    required: true,
+    optionsKey: 'jugadoresOptions',
+  },
+  {
+    name: 'posicion',
+    label: 'Posición',
+    type: 'text',
+    placeholder: 'Ej: Defensa',
+    required: true,
+  },
+  {
+    name: 'numero',
+    label: 'Número',
+    type: 'number',
+    placeholder: 'Ej: 10',
+    required: true,
+  },
+]
+
+const form = useForm({
   id_equipo: '',
   id_jugador: '',
   posicion: '',
@@ -16,68 +59,28 @@ const form = ref({
 })
 
 function submit() {
-  router.post('/admin/plantillas', form.value)
+  form.post('/admin/plantillas', {
+    onSuccess: () => {
+      form.reset('posicion', 'numero', 'id_equipo', 'id_jugador') // limpia todo para nueva creación
+    }
+  })
 }
 </script>
 
 <template>
   <AdminLayout>
     <template #title>Crear Plantilla</template>
-    <div class="p-6 max-w-lg mx-auto bg-gray-800 rounded shadow text-white">
 
-      <h1 class="text-2xl mb-6 font-bold">Crear Plantilla</h1>
+    <div class="p-6 max-w-2xl mx-auto text-white">
+      <h1 class="text-2xl font-bold mb-4">Crear Plantilla</h1>
 
-      <form @submit.prevent="submit" class="space-y-4">
-
-        <div>
-          <label class="block mb-1" for="id_equipo">Equipo</label>
-          <select v-model="form.id_equipo" id="id_equipo" class="w-full p-2 rounded bg-gray-700 border border-gray-600" required>
-            <option value="" disabled>Seleccione un equipo</option>
-            <option v-for="equipo in equipos" :key="equipo.id" :value="equipo.id">{{ equipo.nombre }}</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block mb-1" for="id_jugador">Jugador</label>
-          <select v-model="form.id_jugador" id="id_jugador" class="w-full p-2 rounded bg-gray-700 border border-gray-600" required>
-            <option value="" disabled>Seleccione un jugador</option>
-            <option v-for="jugador in jugadores" :key="jugador.id" :value="jugador.id">{{ jugador.name }}</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block mb-1" for="posicion">Posición</label>
-          <input
-            v-model="form.posicion"
-            type="text"
-            id="posicion"
-            class="w-full p-2 rounded bg-gray-700 border border-gray-600"
-            placeholder="Ej: Defensa"
-            required
-          />
-        </div>
-
-        <div>
-          <label class="block mb-1" for="numero">Número</label>
-          <input
-            v-model="form.numero"
-            type="number"
-            id="numero"
-            min="1"
-            class="w-full p-2 rounded bg-gray-700 border border-gray-600"
-            placeholder="Ej: 10"
-            required
-          />
-        </div>
-
-        <button
-          type="submit"
-          class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded transition w-full"
-        >
-          Crear
-        </button>
-
-      </form>
+      <CrudForm
+        :fields="fields"
+        :form="form"
+        :submit="submit"
+        :selectOptions="{ equiposOptions, jugadoresOptions }"
+        submit-label="Crear Plantilla"
+      />
     </div>
   </AdminLayout>
 </template>

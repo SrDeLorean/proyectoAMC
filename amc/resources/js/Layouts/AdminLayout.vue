@@ -8,11 +8,11 @@ import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 
 const showingNavigationDropdown = ref(false);
-const DEFAULT_IMAGE = '/storage/images/users/default-user.png';
+const DEFAULT_IMAGE = '/images/users/default-user.png';
 
 const getUserImageUrl = (foto) => {
   return foto && foto.trim() !== ''
-    ? `/storage/${foto}`
+    ? `/${foto}`
     : DEFAULT_IMAGE;
 };
 </script>
@@ -60,6 +60,16 @@ const getUserImageUrl = (foto) => {
                   active-class="bg-gray-900 text-red-500 rounded-md px-3 py-2"
                 >
                   Equipos
+                </NavLink>
+
+                <NavLink
+                  v-if="$page.props.auth.user?.role === 'administrador'"
+                  :href="route('admin.plantillas.index')"
+                  :active="route().current('admin.plantillas.index')"
+                  class="text-white hover:text-red-500"
+                  active-class="bg-gray-900 text-red-500 rounded-md px-3 py-2"
+                >
+                  Plantillas
                 </NavLink>
               </div>
             </div>

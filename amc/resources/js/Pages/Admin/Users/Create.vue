@@ -1,20 +1,49 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import CrudForm from '@/Components/Forms/CrudForm.vue'
 
-const form = useForm({
+const fields = [
+  { name: 'name', label: 'Nombre', type: 'text', required: true },
+  { name: 'id_ea', label: 'ID EA', type: 'text' },
+  { name: 'email', label: 'Email', type: 'email', required: true },
+  { name: 'password', label: 'Contraseña', type: 'password', required: true },
+  { name: 'password_confirmation', label: 'Confirmar Contraseña', type: 'password', required: true },
+  {
+    name: 'role',
+    label: 'Rol',
+    type: 'select',
+    required: true,
+    placeholder: 'Seleccione un rol',
+    optionsKey: 'roles'
+  },
+  { name: 'foto', label: 'Foto de perfil', type: 'file' },
+]
+
+const roles = [
+  { label: 'Jugador', value: 'jugador' },
+  { label: 'Entrenador', value: 'entrenador' },
+  { label: 'Administrador', value: 'administrador' }
+]
+
+const initialData = {
   name: '',
   id_ea: '',
   email: '',
   password: '',
   password_confirmation: '',
   role: 'jugador',
-  photo: null,
-})
+  foto: null,
+}
 
-const submit = () => {
+const form = useForm({ ...initialData })
+
+function submit() {
   form.post('/admin/usuarios', {
     forceFormData: true,
+    onSuccess: () => {
+      form.reset('password', 'password_confirmation', 'foto') // Limpiar solo esos campos tras éxito
+    }
   })
 }
 </script>
@@ -22,63 +51,16 @@ const submit = () => {
 <template>
   <AdminLayout>
     <template #title>Crear Usuario</template>
-    <div class="p-6">
-      <h1 class="text-2xl font-bold mb-4 text-white">Crear Usuario</h1>
+    <div class="p-6 max-w-2xl mx-auto text-white">
+      <h1 class="text-2xl font-bold mb-4">Crear Usuario</h1>
 
-      <form @submit.prevent="submit" class="bg-gray-900 p-6 rounded-xl shadow space-y-4">
-        <div>
-          <label class="block text-sm text-gray-400">Nombre</label>
-          <input v-model="form.name" type="text" class="w-full p-2 rounded bg-gray-800 text-white" />
-          <p v-if="form.errors.name" class="text-red-500 text-sm">{{ form.errors.name }}</p>
-        </div>
-
-        <div>
-          <label class="block text-sm text-gray-400">ID EA</label>
-          <input v-model="form.id_ea" type="text" class="w-full p-2 rounded bg-gray-800 text-white" />
-          <p v-if="form.errors.id_ea" class="text-red-500 text-sm">{{ form.errors.id_ea }}</p>
-        </div>
-
-        <div>
-          <label class="block text-sm text-gray-400">Email</label>
-          <input v-model="form.email" type="email" class="w-full p-2 rounded bg-gray-800 text-white" />
-          <p v-if="form.errors.email" class="text-red-500 text-sm">{{ form.errors.email }}</p>
-        </div>
-
-        <div>
-          <label class="block text-sm text-gray-400">Contraseña</label>
-          <input v-model="form.password" type="password" class="w-full p-2 rounded bg-gray-800 text-white" />
-          <p v-if="form.errors.password" class="text-red-500 text-sm">{{ form.errors.password }}</p>
-        </div>
-
-        <div>
-          <label class="block text-sm text-gray-400">Confirmar Contraseña</label>
-          <input v-model="form.password_confirmation" type="password" class="w-full p-2 rounded bg-gray-800 text-white" />
-        </div>
-
-        <div>
-          <label class="block text-sm text-gray-400">Rol</label>
-          <select v-model="form.role" class="w-full p-2 rounded bg-gray-800 text-white">
-            <option value="jugador">Jugador</option>
-            <option value="entrenador">Entrenador</option>
-            <option value="administrador">Administrador</option>
-          </select>
-          <p v-if="form.errors.role" class="text-red-500 text-sm">{{ form.errors.role }}</p>
-        </div>
-
-        <div>
-          <label class="block text-sm text-gray-400">Foto de perfil</label>
-          <input
-            type="file"
-            @change="e => form.photo = e.target.files[0]"
-            class="w-full p-2 rounded bg-gray-800 text-white"
-          />
-          <p v-if="form.errors.photo" class="text-red-500 text-sm">{{ form.errors.photo }}</p>
-        </div>
-
-        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition">
-          Crear Usuario
-        </button>
-      </form>
+      <CrudForm
+        :fields="fields"
+        :form="form"
+        :submit="submit"
+        :selectOptions="{ roles }"
+        submit-label="Crear Usuario"
+      />
     </div>
   </AdminLayout>
 </template>

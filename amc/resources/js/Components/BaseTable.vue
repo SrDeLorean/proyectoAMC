@@ -1,130 +1,114 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch } from 'vue'
+import {
+  PencilSquareIcon as EditIcon,
+  TrashIcon,
+  ArrowPathIcon as RestoreIcon
+} from '@heroicons/vue/24/solid'
 
 const props = defineProps({
-  columns: {
-    type: Array,
-    required: true
-  },
-  rows: {
-    type: Array,
-    required: true
-  },
-  actions: {
-    type: Array,
-    default: () => []
-  }
-});
+  columns: { type: Array, required: true },
+  rows: { type: Array, required: true },
+  actions: { type: Array, default: () => [] }
+})
 
-const emit = defineEmits(['action']);
+const emit = defineEmits(['action'])
 
-const filterText = ref('');
-const sortKey = ref('');
-const sortOrder = ref('asc');
-const currentPage = ref(1);
-const perPage = ref(10);
+const filterText = ref('')
+const sortKey = ref('')
+const sortOrder = ref('asc')
+const currentPage = ref(1)
+const perPage = ref(10)
 
-watch(perPage, () => {
-  currentPage.value = 1;
-});
+watch(perPage, () => { currentPage.value = 1 })
+
+// Función para obtener valor anidado tipo 'user.name'
+function getNestedValue(obj, path) {
+  if (!obj || !path) return null
+  return path.split('.').reduce((o, key) => (o && key in o) ? o[key] : null, obj)
+}
 
 const filteredRows = computed(() => {
-  if (!filterText.value) return props.rows;
-
-  const search = filterText.value.toLowerCase();
-
+  if (!filterText.value) return props.rows
+  const search = filterText.value.toLowerCase()
   return props.rows.filter(row =>
     props.columns.some(col => {
-      const val = row[col.key];
-      return val != null && String(val).toLowerCase().includes(search);
+      const val = getNestedValue(row, col.key)
+      return val != null && String(val).toLowerCase().includes(search)
     })
-  );
-});
+  )
+})
 
 const sortedRows = computed(() => {
-  if (!sortKey.value) return filteredRows.value;
-
+  if (!sortKey.value) return filteredRows.value
   return [...filteredRows.value].sort((a, b) => {
-    let valA = a[sortKey.value];
-    let valB = b[sortKey.value];
+    let valA = getNestedValue(a, sortKey.value)
+    let valB = getNestedValue(b, sortKey.value)
+    if (typeof valA === 'string') valA = valA.toLowerCase()
+    if (typeof valB === 'string') valB = valB.toLowerCase()
+    if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1
+    if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1
+    return 0
+  })
+})
 
-    if (typeof valA === 'string') valA = valA.toLowerCase();
-    if (typeof valB === 'string') valB = valB.toLowerCase();
-
-    if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1;
-    if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1;
-    return 0;
-  });
-});
-
-const totalPages = computed(() => Math.ceil(sortedRows.value.length / perPage.value));
+const totalPages = computed(() => Math.ceil(sortedRows.value.length / perPage.value))
 
 const paginatedRows = computed(() => {
-  const start = (currentPage.value - 1) * perPage.value;
-  return sortedRows.value.slice(start, start + perPage.value);
-});
+  const start = (currentPage.value - 1) * perPage.value
+  return sortedRows.value.slice(start, start + perPage.value)
+})
 
 function goToPage(page) {
   if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page;
+    currentPage.value = page
   }
 }
 
 function sortBy(columnKey) {
   if (sortKey.value === columnKey) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
   } else {
-    sortKey.value = columnKey;
-    sortOrder.value = 'asc';
+    sortKey.value = columnKey
+    sortOrder.value = 'asc'
   }
 }
 
 function handleAction(actionName, row) {
-  emit('action', { actionName, row });
+  emit('action', { actionName, row })
 }
 
 const pagesToShow = computed(() => {
-  const total = totalPages.value;
-  const current = currentPage.value;
-  const delta = 2;
-  const pages = [];
-
+  const total = totalPages.value
+  const current = currentPage.value
+  const delta = 2
+  const pages = []
   if (total <= 7) {
-    for (let i = 1; i <= total; i++) pages.push(i);
+    for (let i = 1; i <= total; i++) pages.push(i)
   } else {
-    const left = Math.max(2, current - delta);
-    const right = Math.min(total - 1, current + delta);
-
-    pages.push(1);
-    if (left > 2) pages.push('...');
-    for (let i = left; i <= right; i++) pages.push(i);
-    if (right < total - 1) pages.push('...');
-    pages.push(total);
+    const left = Math.max(2, current - delta)
+    const right = Math.min(total - 1, current + delta)
+    pages.push(1)
+    if (left > 2) pages.push('...')
+    for (let i = left; i <= right; i++) pages.push(i)
+    if (right < total - 1) pages.push('...')
+    pages.push(total)
   }
-  return pages;
-});
+  return pages
+})
 
-// Función para asegurar URL absoluta con '/' al inicio
+// Función para detectar si un string es URL de imagen
+function isImageUrl(url) {
+  if (typeof url !== 'string') return false
+  return /\.(jpeg|jpg|gif|png|webp|svg|bmp|tiff|avif)(\?.*)?$/i.test(url)
+}
+
+// Función para obtener URL absoluta (como antes)
 function getFotoUrl(foto) {
-  if (!foto) return null;
-
-  if (foto.startsWith('http://') || foto.startsWith('https://')) {
-    return foto;
-  }
-
-  if (foto.startsWith('/')) {
-    return foto;
-  }
-
-  if (foto.startsWith('')) {
-    return '/' + foto;
-  }
-
-  if (foto.startsWith('/')) {
-    return foto;
-  }
-
-  return '/' + foto;
+  if (!foto) return null
+  if (foto.startsWith('http://') || foto.startsWith('https://')) return foto
+  if (foto.startsWith('/')) return foto
+  return '/' + foto
 }
 </script>
 
@@ -196,36 +180,25 @@ function getFotoUrl(foto) {
             class="border-b border-gray-800 hover:bg-gray-800"
           >
             <td v-for="column in columns" :key="column.key" class="px-6 py-4">
-              <template v-if="column.key === 'logo'">
-                <img
-                  v-if="row.logo"
-                  :src="getFotoUrl(row.logo)"
-                  alt="Logo"
-                  class="w-12 h-12 object-contain rounded"
-                />
-                <span v-else class="text-gray-500 italic">Sin logo</span>
-              </template>
-
-              <template v-else-if="column.key === 'color_primario' || column.key === 'color_secundario'">
+              <template v-if="column.key === 'color_primario' || column.key === 'color_secundario'">
                 <div
                   class="w-8 h-8 rounded border border-gray-600"
-                  :style="{ backgroundColor: row[column.key] }"
-                  :title="row[column.key]"
+                  :style="{ backgroundColor: getNestedValue(row, column.key) }"
+                  :title="getNestedValue(row, column.key)"
                 ></div>
               </template>
 
-              <template v-else-if="column.key === 'foto'">
-                <img
-                  v-if="row.foto"
-                  :src="getFotoUrl(row.foto)"
-                  alt="Foto"
-                  class="w-12 h-12 object-cover rounded-full"
-                />
-                <span v-else class="text-gray-500 italic">Sin foto</span>
-              </template>
-
               <template v-else>
-                {{ row[column.key] }}
+                <template v-if="isImageUrl(getNestedValue(row, column.key))">
+                  <img
+                    :src="getFotoUrl(getNestedValue(row, column.key))"
+                    alt="Imagen"
+                    class="w-12 h-12 object-cover rounded-full"
+                  />
+                </template>
+                <template v-else>
+                  {{ getNestedValue(row, column.key) }}
+                </template>
               </template>
             </td>
 
@@ -236,11 +209,18 @@ function getFotoUrl(foto) {
               <button
                 v-for="action in actions"
                 :key="action.actionName"
-                :class="action.class"
                 type="button"
                 @click="handleAction(action.actionName, row)"
+                class="p-1 rounded hover:bg-gray-700 transition"
+                :title="action.label"
               >
-                {{ action.label }}
+                <component
+                  :is="action.actionName === 'edit' ? EditIcon
+                        : action.actionName === 'delete' ? TrashIcon
+                        : action.actionName === 'restore' ? RestoreIcon
+                        : null"
+                  class="w-5 h-5 text-gray-300 hover:text-red-500"
+                />
               </button>
             </td>
           </tr>

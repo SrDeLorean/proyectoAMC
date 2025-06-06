@@ -5,14 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Session;
 
 class UserController extends Controller
 {
-    // Ruta de la imagen por defecto (ubicada en public/)
-    private const DEFAULT_PHOTO = 'images/users/default-user.png';
+    private const DEFAULT_foto = 'images/users/default-user.png';
 
     public function index()
     {
@@ -20,6 +19,8 @@ class UserController extends Controller
 
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
+            // Pasa el flash explícitamente desde sesión
+            'success' => Session::get('success'),
         ]);
     }
 
@@ -36,17 +37,16 @@ class UserController extends Controller
             'email'    => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'role'     => 'required|in:jugador,entrenador,administrador',
-            'photo'    => 'nullable|image|max:2048',
+            'foto'     => 'nullable|image|max:2048',
         ]);
 
-        // Si se sube una imagen, se guarda en public/images/users (usando move)
-        if ($request->hasFile('photo')) {
-            $photo = $request->file('photo');
-            $filename = uniqid() . '.' . $photo->getClientOriginalExtension();
-            $photo->move(public_path('images/users'), $filename);
-            $photoPath = 'images/users/' . $filename;
+        if ($request->hasFile('foto')) {
+            $foto = $request->file('foto');
+            $filename = uniqid() . '.' . $foto->getClientOriginalExtension();
+            $foto->move(public_path('images/users'), $filename);
+            $fotoPath = 'images/users/' . $filename;
         } else {
-            $photoPath = self::DEFAULT_PHOTO;
+            $fotoPath = self::DEFAULT_foto;
         }
 
         User::create([
@@ -55,10 +55,13 @@ class UserController extends Controller
             'email'    => $request->email,
             'password' => bcrypt($request->password),
             'role'     => $request->role,
-            'foto'     => $photoPath,
+            'foto'     => $fotoPath,
         ]);
 
-        return redirect()->route('admin.users.index')->with('success', 'Usuario creado correctamente.');
+        // Flash manual usando Session::flash
+        Session::flash('success', 'Usuario creado correctamente.');
+
+        return redirect()->route('admin.users.index');
     }
 
     public function edit(User $user)
@@ -75,37 +78,45 @@ class UserController extends Controller
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'role'  => ['required', Rule::in(['jugador', 'entrenador', 'administrador'])],
             'id_ea' => 'nullable|string|max:255',
-            'photo' => 'nullable|image|max:2048',
         ]);
+
+        if ($request->hasFile('foto')) {
+            $request->validate([
+                'foto' => 'image|max:2048',
+            ]);
+        }
 
         $user->name  = $validated['name'];
         $user->email = $validated['email'];
         $user->role  = $validated['role'];
         $user->id_ea = $validated['id_ea'] ?? null;
 
-        if ($request->hasFile('photo')) {
-            // Elimina la imagen anterior si no es la por defecto
-            if ($user->foto && $user->foto !== self::DEFAULT_PHOTO && file_exists(public_path($user->foto))) {
+        if ($request->hasFile('foto')) {
+            if ($user->foto && $user->foto !== self::DEFAULT_foto && file_exists(public_path($user->foto))) {
                 unlink(public_path($user->foto));
             }
 
-            $photo = $request->file('photo');
-            $filename = uniqid() . '.' . $photo->getClientOriginalExtension();
-            $photo->move(public_path('images/users'), $filename);
+            $foto = $request->file('foto');
+            $filename = uniqid() . '.' . $foto->getClientOriginalExtension();
+            $foto->move(public_path('images/users'), $filename);
             $user->foto = 'images/users/' . $filename;
         }
 
         $user->save();
 
-        return redirect()->route('admin.users.index')->with('success', 'Usuario actualizado correctamente.');
+        // Aquí puedes usar with() o Session::flash, pero para coherencia con store, cambia a Session::flash
+        Session::flash('success', 'Usuario actualizado correctamente.');
+
+        return redirect()->route('admin.users.index');
     }
 
     public function destroy(User $user)
     {
-
         $user->delete();
 
-        return redirect()->route('admin.users.index')->with('success', 'Usuario eliminado correctamente.');
+        Session::flash('success', 'Usuario eliminado correctamente.');
+
+        return redirect()->route('admin.users.index');
     }
 
     public function trashed()
@@ -114,6 +125,7 @@ class UserController extends Controller
 
         return Inertia::render('Admin/Users/Trashed', [
             'users' => $trashedUsers,
+            'success' => Session::get('success'),
         ]);
     }
 
@@ -122,6 +134,8 @@ class UserController extends Controller
         $user = User::onlyTrashed()->findOrFail($id);
         $user->restore();
 
-        return redirect()->route('admin.users.trashed')->with('success', 'Usuario restaurado correctamente.');
+        Session::flash('success', 'Usuario restaurado correctamente.');
+
+        return redirect()->route('admin.users.trashed');
     }
 }
