@@ -9,6 +9,14 @@ use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\PlantillaController;
 
+
+use App\Http\Controllers\TemporadaController;
+use App\Http\Controllers\CompetenciaController;
+use App\Http\Controllers\TemporadaCompetenciaController;
+use App\Http\Controllers\TemporadaEquipoController;
+
+use App\Http\Controllers\CalendarioController;
+
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
@@ -111,6 +119,50 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/admin/plantillas/trashed', [PlantillaController::class, 'trashed'])->name('admin.plantillas.trashed');
         Route::post('/admin/plantillas/{id}/restore', [PlantillaController::class, 'restore'])->name('admin.plantillas.restore');
 
+
+        // Rutas de CRUD de temporadas
+        Route::get('/temporadas', [TemporadaController::class, 'index'])->name('temporadas.index');
+        Route::get('/temporadas/create', [TemporadaController::class, 'create'])->name('temporadas.create');
+        Route::post('/temporadas', [TemporadaController::class, 'store'])->name('temporadas.store');
+        Route::get('/temporadas/{temporada}/edit', [TemporadaController::class, 'edit'])->name('temporadas.edit');
+        Route::put('/temporadas/{temporada}', [TemporadaController::class, 'update'])->name('temporadas.update');
+        Route::delete('/temporadas/{temporada}', [TemporadaController::class, 'destroy'])->name('temporadas.destroy');
+        Route::get('/temporadas/trashed', [TemporadaController::class, 'trashed'])->name('temporadas.trashed');
+        Route::post('/temporadas/{id}/restore', [TemporadaController::class, 'restore'])->name('temporadas.restore');
+
+        Route::get('/competencias', [CompetenciaController::class, 'index'])->name('competencias.index');
+        Route::get('/competencias/create', [CompetenciaController::class, 'create'])->name('competencias.create');
+        Route::post('/competencias', [CompetenciaController::class, 'store'])->name('competencias.store');
+        Route::get('/competencias/{competencia}/edit', [CompetenciaController::class, 'edit'])->name('competencias.edit');
+        Route::put('/competencias/{competencia}', [CompetenciaController::class, 'update'])->name('competencias.update');
+        Route::delete('/competencias/{competencia}', [CompetenciaController::class, 'destroy'])->name('competencias.destroy');
+        Route::get('/competencias/trashed', [CompetenciaController::class, 'trashed'])->name('competencias.trashed');
+        Route::post('/competencias/{id}/restore', [CompetenciaController::class, 'restore'])->name('competencias.restore');
+
+        // Agrupar rutas estándar
+        Route::resource('temporada-competencias', TemporadaCompetenciaController::class); // si no usas `show`
+
+        Route::get('/temporada-competencias/{id}/equipos', [TemporadaCompetenciaController::class, 'equipos'])->name('temporada-competencias.equipos');
+
+            // Rutas adicionales personalizadas
+        Route::get('temporada-competencias/trashed', [TemporadaCompetenciaController::class, 'trashed'])->name('temporada-competencias.trashed');
+        Route::post('temporada-competencias/{id}/restore', [TemporadaCompetenciaController::class, 'restore'])->name('temporada-competencias.restore');
+
+
+
+
+        Route::post('/calendario/generar/{id}', [CalendarioController::class, 'generateByTemporadaCompetencia'])
+            ->name('calendario.generar');
+
+
+        Route::resource('temporada-equipos', TemporadaEquipoController::class)
+            ->except(['show']); // si no usas `show`
+        // Rutas adicionales personalizadas
+        Route::get('temporada-equipos/trashed', [TemporadaEquipoController::class, 'trashed'])->name('temporada-equipos.trashed');
+        Route::post('temporada-equipos/{id}/restore', [TemporadaEquipoController::class, 'restore'])->name('temporada-equipos.restore');
+
+
+        Route::resource('temporada-equipos', TemporadaEquipoController::class);
     });
 
 

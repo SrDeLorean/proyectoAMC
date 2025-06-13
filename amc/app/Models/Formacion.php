@@ -3,14 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Equipo;
 
 class Formacion extends Model
 {
-    protected $fillable = ['nombre'];
+    protected $table = 'formaciones'; // 👈 esto es lo que faltaba
 
-    public function equipos()
-    {
-        return $this->hasMany(Equipo::class, 'id_formacion');
-    }
+    protected $fillable = ['nombre'];
 }

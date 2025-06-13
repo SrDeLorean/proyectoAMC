@@ -6,6 +6,9 @@ use App\Models\Equipo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
+use App\Models\Formacion;
+use App\Models\User;
+
 
 class EquipoController extends Controller
 {
@@ -25,7 +28,12 @@ class EquipoController extends Controller
 
     public function create()
     {
-        return Inertia::render('Equipos/Create');
+        $entrenadores = User::where('role', 'entrenador')->select('id', 'name')->get();
+        $formaciones = Formacion::select('id', 'nombre')->get();
+        return Inertia::render('Equipos/Create', [
+            'usuarios' => $entrenadores,
+            'formaciones' => $formaciones,
+        ]);
     }
 
     public function store(Request $request)
@@ -41,6 +49,7 @@ class EquipoController extends Controller
             'twitch'           => 'nullable|string|max:255',
             'youtube'          => 'nullable|string|max:255',
             'id_usuario'       => 'nullable|integer|exists:users,id',
+            'id_usuario2'      => 'nullable|integer|exists:users,id',  // <--- Agregado aquí
         ]);
 
         if ($request->hasFile('logo')) {
@@ -64,7 +73,15 @@ class EquipoController extends Controller
             ? asset($equipo->logo)
             : asset(self::DEFAULT_LOGO);
 
-        return Inertia::render('Equipos/Edit', ['equipo' => $equipoData]);
+        // Traer usuarios para selects también para editar (falta en tu método original)
+        $entrenadores = User::where('role', 'entrenador')->select('id', 'name')->get();
+        $formaciones = Formacion::select('id', 'nombre')->get();
+
+        return Inertia::render('Equipos/Edit', [
+            'equipo' => $equipoData,
+            'usuarios' => $entrenadores,      // <-- agregado para select usuario
+            'formaciones' => $formaciones,    // <-- agregado para select formacion
+        ]);
     }
 
     public function update(Request $request, Equipo $equipo)
@@ -80,6 +97,7 @@ class EquipoController extends Controller
             'twitch'           => 'nullable|string|max:255',
             'youtube'          => 'nullable|string|max:255',
             'id_usuario'       => 'nullable|integer|exists:users,id',
+            'id_usuario2'      => 'nullable|integer|exists:users,id',  // <--- Agregado aquí
         ]);
 
         if ($request->hasFile('logo')) {

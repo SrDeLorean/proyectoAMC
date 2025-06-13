@@ -7,6 +7,8 @@ use Database\Seeders\FormacionSeeder;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
+use Database\Seeders\EquipoSeeder;
+
 class DatabaseSeeder extends Seeder
 {
     /**
@@ -18,5 +20,6 @@ class DatabaseSeeder extends Seeder
 
         $this->call(UserSeeder::class);
         $this->call(FormacionSeeder::class);
+        $this->call(EquipoSeeder::class);
     }
 }

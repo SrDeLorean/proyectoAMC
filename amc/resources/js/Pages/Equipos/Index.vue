@@ -2,7 +2,7 @@
 import { router } from '@inertiajs/vue3'
 import Swal from 'sweetalert2'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import BaseTable from '@/Components/BaseTable.vue'
+import BaseTable from '@/Components/Table/DataTable.vue'
 import { computed } from 'vue'
 
 const props = defineProps({
@@ -21,7 +21,10 @@ const columns = [
   { label: 'Formación', key: 'formacion.nombre' }, // relación
   { label: 'Instagram', key: 'instagram' },
   { label: 'Twitch', key: 'twitch' },
-  { label: 'YouTube', key: 'youtube' }
+  { label: 'YouTube', key: 'youtube' },
+  { label: 'Propietario', key: 'propietario.name' }, // relación
+  { label: 'Entrenador', key: 'entrenador.name' } // relación
+
 ]
 
 const actions = computed(() => {

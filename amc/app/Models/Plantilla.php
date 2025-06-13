@@ -16,6 +16,9 @@ class Plantilla extends Model
         'numero',
     ];
 
+    // Relaciones que se cargarán automáticamente
+    protected $with = ['equipo', 'jugador'];
+
     public function equipo()
     {
         return $this->belongsTo(Equipo::class, 'id_equipo');

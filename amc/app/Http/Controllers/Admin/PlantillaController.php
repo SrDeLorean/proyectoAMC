@@ -6,32 +6,30 @@ use App\Http\Controllers\Controller;
 use App\Models\Plantilla;
 use App\Models\Equipo;
 use App\Models\User;
+use App\Models\Formacion;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Session;
+use Inertia\Inertia;
 
 class PlantillaController extends Controller
 {
     public function index()
     {
-        $plantillas = Plantilla::with(['equipo', 'jugador'])->paginate(10);
+        $plantillas = Plantilla::latest()->paginate(10);
 
         return Inertia::render('Admin/Plantillas/Index', [
             'plantillas' => $plantillas,
-            'success' => Session::get('success'),
+            'success' => session('success'),
         ]);
     }
 
     public function create()
     {
-        $equipos = Equipo::select('id', 'nombre')->get();
-
-        $jugadores = User::where('role', 'jugador')->select('id', 'name')->get();
-
         return Inertia::render('Admin/Plantillas/Create', [
-            'equipos' => $equipos,
-            'jugadores' => $jugadores,
+            'equipos' => Equipo::select('id', 'nombre')->get(),
+            'formaciones' => Formacion::select('id', 'nombre')->get(),
+            'jugadores' => User::where('role', 'jugador')->select('id', 'name')->get(),
         ]);
     }
 
@@ -44,12 +42,12 @@ class PlantillaController extends Controller
             'numero'     => 'required|integer|min:1',
         ]);
 
-        Plantilla::create([
-            'id_equipo'  => $request->id_equipo,
-            'id_jugador' => $request->id_jugador,
-            'posicion'   => $request->posicion,
-            'numero'     => $request->numero,
-        ]);
+        Plantilla::create($request->only([
+            'id_equipo',
+            'id_jugador',
+            'posicion',
+            'numero',
+        ]));
 
         Session::flash('success', 'Plantilla creada correctamente.');
 
@@ -58,15 +56,11 @@ class PlantillaController extends Controller
 
     public function edit(Plantilla $plantilla)
     {
-        $equipos = Equipo::select('id', 'nombre')->get();
-
-        $jugadores = User::where('role', 'jugador')->select('id', 'name')->get();
-
         return Inertia::render('Admin/Plantillas/Edit', [
-            'plantilla' => $plantilla->load('equipo', 'jugador'),
-            'equipos' => $equipos,
-            'jugadores' => $jugadores,
-            'success' => Session::get('success'),
+            'plantilla' => $plantilla->load(['equipo', 'jugador']),
+            'equipos' => Equipo::select('id', 'nombre')->get(),
+            'jugadores' => User::where('role', 'jugador')->select('id', 'name')->get(),
+            'success' => session('success'),
         ]);
     }
 
@@ -97,11 +91,11 @@ class PlantillaController extends Controller
 
     public function trashed()
     {
-        $plantillas = Plantilla::onlyTrashed()->with(['equipo', 'jugador'])->paginate(10);
+        $plantillas = Plantilla::onlyTrashed()->latest()->paginate(10);
 
-        return inertia('Admin/Plantillas/Trashed', [
+        return Inertia::render('Admin/Plantillas/Trashed', [
             'plantillas' => $plantillas,
-            'success' => session('success')
+            'success' => session('success'),
         ]);
     }
 
@@ -114,5 +108,4 @@ class PlantillaController extends Controller
 
         return redirect()->route('admin.plantillas.trashed');
     }
-
 }

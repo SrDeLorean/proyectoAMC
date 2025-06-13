@@ -1,56 +1,66 @@
 <script setup>
 import { router } from '@inertiajs/vue3'
 import Swal from 'sweetalert2'
-import AdminLayout from '@/Layouts/AdminLayout.vue'
-import BaseTable from '@/Components/BaseTable.vue'
 import { computed } from 'vue'
+import AdminLayout from '@/Layouts/AdminLayout.vue'
+import BaseTable from '@/Components/Table/DataTable.vue'
 
 const props = defineProps({
-  plantillas: Object,
+  plantillas: Object,     // paginadas
   success: String,
-  trashed: Boolean
+  trashed: Boolean        // true si estamos en /trashed
 })
 
-const columns = [
+// Columnas base
+const baseColumns = [
   { label: 'ID', key: 'id' },
   { label: 'Equipo', key: 'equipo.nombre' },
-  { label: 'Foto', key: 'jugador.foto', isImage: true }, // columna para la foto
+  { label: 'Foto', key: 'jugador.foto', isImage: true },
   { label: 'Jugador', key: 'jugador.name' },
   { label: 'Posición', key: 'posicion' },
-  { label: 'Número', key: 'numero' }
+  { label: 'Número', key: 'numero' },
 ]
 
+// Si está en papelera, se agrega columna de fecha de eliminación
+const columns = computed(() =>
+  props.trashed
+    ? [...baseColumns, { label: 'Eliminado el', key: 'deleted_at' }]
+    : baseColumns
+)
+
 const actions = computed(() => {
-  if (props.trashed) {
-    return [
-      {
-        label: 'Restaurar',
-        class: 'text-green-400 hover:text-green-600 transition',
-        actionName: 'restore'
-      }
-    ]
-  } else {
-    return [
-      {
-        label: 'Editar',
-        class: 'text-blue-400 hover:text-blue-600 transition',
-        actionName: 'edit'
-      },
-      {
-        label: 'Eliminar',
-        class: 'text-red-500 hover:text-red-700 transition',
-        actionName: 'delete'
-      }
-    ]
-  }
+  return props.trashed
+    ? [
+        {
+          label: 'Restaurar',
+          class: 'text-green-500 hover:text-green-700 transition',
+          actionName: 'restore'
+        }
+      ]
+    : [
+        {
+          label: 'Editar',
+          class: 'text-blue-400 hover:text-blue-600 transition',
+          actionName: 'edit'
+        },
+        {
+          label: 'Eliminar',
+          class: 'text-red-500 hover:text-red-700 transition',
+          actionName: 'delete'
+        }
+      ]
 })
 
 function onTableAction({ actionName, row }) {
+  const jugador = row.jugador?.name || 'jugador desconocido'
+
   if (actionName === 'edit') {
     router.get(`/admin/plantillas/${row.id}/edit`)
-  } else if (actionName === 'delete') {
+  }
+
+  if (actionName === 'delete') {
     Swal.fire({
-      title: `¿Eliminar la plantilla del jugador ${row.jugador.name}?`,
+      title: `¿Eliminar la plantilla del jugador ${jugador}?`,
       text: 'Esta acción no se puede deshacer',
       icon: 'warning',
       showCancelButton: true,
@@ -63,9 +73,11 @@ function onTableAction({ actionName, row }) {
         router.delete(`/admin/plantillas/${row.id}`)
       }
     })
-  } else if (actionName === 'restore') {
+  }
+
+  if (actionName === 'restore') {
     Swal.fire({
-      title: `¿Restaurar la plantilla del jugador ${row.jugador.name}?`,
+      title: `¿Restaurar la plantilla del jugador ${jugador}?`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#22c55e',
@@ -87,19 +99,27 @@ function onTableAction({ actionName, row }) {
       {{ trashed ? 'Plantillas Eliminadas' : 'Plantillas' }}
     </template>
 
-    <div class="p-6">
-      <!-- Mensaje flash -->
-      <div v-if="success" class="mb-4 p-3 bg-green-600 text-white rounded shadow">
+    <div class="p-6 space-y-6">
+      <!-- Mensaje de éxito -->
+      <div v-if="success" class="p-3 bg-green-600 text-white rounded shadow">
         {{ success }}
       </div>
 
-      <div class="flex justify-between items-center mb-6">
+      <!-- Encabezado + Botones -->
+      <div class="flex justify-between items-center">
         <h1 class="text-2xl font-bold text-white">
-          {{ trashed ? 'Plantillas eliminadas' : 'Plantillas' }}
+          {{ trashed ? 'Plantillas Eliminadas' : 'Plantillas' }}
         </h1>
-
-        <div class="flex gap-4">
-          <template v-if="!trashed">
+        <div class="flex gap-3">
+          <template v-if="trashed">
+            <a
+              href="/admin/plantillas"
+              class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded transition"
+            >
+              ← Volver a activos
+            </a>
+          </template>
+          <template v-else>
             <a
               href="/admin/plantillas/create"
               class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition"
@@ -110,20 +130,13 @@ function onTableAction({ actionName, row }) {
               href="/admin/plantillas/trashed"
               class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded transition"
             >
-              🗑️ Plantillas eliminadas
-            </a>
-          </template>
-          <template v-else>
-            <a
-              href="/admin/plantillas"
-              class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded transition"
-            >
-              ← Volver a activos
+              🗑️ Ver Eliminadas
             </a>
           </template>
         </div>
       </div>
 
+      <!-- Tabla -->
       <BaseTable
         :columns="columns"
         :rows="plantillas.data"
@@ -138,7 +151,6 @@ function onTableAction({ actionName, row }) {
           />
         </template>
       </BaseTable>
-
     </div>
   </AdminLayout>
 </template>

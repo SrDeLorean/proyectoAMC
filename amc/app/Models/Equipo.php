@@ -22,6 +22,10 @@ class Equipo extends Model
         'id_usuario',
         'id_usuario2',
     ];
+
+    // Relaciones que se cargarán automáticamente
+    protected $with = ['formacion', 'propietario', 'entrenador'];
+
     public function formacion()
     {
         return $this->belongsTo(Formacion::class, 'id_formacion');

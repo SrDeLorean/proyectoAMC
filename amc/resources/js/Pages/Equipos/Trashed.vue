@@ -2,7 +2,7 @@
 import { router } from '@inertiajs/vue3'
 import Swal from 'sweetalert2'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import BaseTable from '@/Components/BaseTable.vue'
+import BaseTable from '@/Components/Table/DataTable.vue'
 
 const props = defineProps({
   equipos: Array,

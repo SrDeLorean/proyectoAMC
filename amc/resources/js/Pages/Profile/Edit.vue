@@ -1,47 +1,57 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AdminLayout.vue';
-import DeleteUserForm from './Partials/DeleteUserForm.vue';
-import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
-import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
-import { Head } from '@inertiajs/vue3';
+import AuthenticatedLayout from '@/Layouts/AdminLayout.vue'
+import DeleteUserForm from './Partials/DeleteUserForm.vue'
+import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue'
+import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue'
+import { Head } from '@inertiajs/vue3'
 
 defineProps({
-    mustVerifyEmail: {
-        type: Boolean,
-    },
-    status: {
-        type: String,
-    },
-});
+  mustVerifyEmail: Boolean,
+  status: String,
+})
 </script>
 
 <template>
-    <Head title="Perfil" />
+  <Head title="Perfil" />
 
-    <AuthenticatedLayout>
-        <template #header>
-            <h2 class="text-2xl font-semibold leading-tight text-white">
-                Perfil de Usuario
-            </h2>
-        </template>
+  <AuthenticatedLayout>
+    <template #header>
+      <h2 class="text-2xl font-semibold leading-tight text-white">
+        Perfil de Usuario
+      </h2>
+    </template>
 
-        <div class="py-12 bg-gray-950 min-h-screen">
-            <div class="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
+    <main class="py-12 min-h-screen space-y-10">
+      <!-- Información del perfil -->
+      <div
+        class="w-full max-w-full mx-auto px-4 sm:px-6 md:px-8 py-8
+               bg-gray-800 rounded-xl shadow text-white
+               border border-red-600"
+      >
+        <UpdateProfileInformationForm
+          :must-verify-email="mustVerifyEmail"
+          :status="status"
+          class="max-w-3xl mx-auto"
+        />
+      </div>
 
-                <!-- Información del perfil -->
-                <UpdateProfileInformationForm
-                    :must-verify-email="mustVerifyEmail"
-                    :status="status"
-                    class="max-w-3xl"
-                />
+      <!-- Cambiar contraseña -->
+      <div
+        class="w-full max-w-full mx-auto px-4 sm:px-6 md:px-8 py-8
+               bg-gray-800 rounded-xl shadow text-white
+               border border-red-600"
+      >
+        <UpdatePasswordForm class="max-w-3xl mx-auto" />
+      </div>
 
-                <!-- Cambiar contraseña -->
-                <UpdatePasswordForm class="max-w-3xl" />
-
-                <!-- Eliminar cuenta -->
-                <DeleteUserForm class="max-w-3xl" />
-
-            </div>
-        </div>
-    </AuthenticatedLayout>
+      <!-- Eliminar cuenta -->
+      <div
+        class="w-full max-w-full mx-auto px-4 sm:px-6 md:px-8 py-8
+               bg-gray-800 rounded-xl shadow text-white
+               border border-red-600"
+      >
+        <DeleteUserForm class="max-w-3xl mx-auto" />
+      </div>
+    </main>
+  </AuthenticatedLayout>
 </template>

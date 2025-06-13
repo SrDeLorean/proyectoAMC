@@ -4,8 +4,8 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import EquipoForm from '@/Components/Forms/CrudForm.vue'
 
 const props = defineProps({
-  usuarios: Array,
-  formaciones: Array
+  usuarios: Array,       // [{ id: 1, name: 'Juan' }, ...]
+  formaciones: Array     // [{ id: 1, nombre: '4-4-2' }, ...]
 })
 
 const form = useForm({
@@ -18,7 +18,8 @@ const form = useForm({
   instagram: '',
   twitch: '',
   youtube: '',
-  id_usuario: ''
+  id_usuario: '',
+  id_usuario2: ''
 })
 
 const submit = () => {
@@ -33,11 +34,36 @@ const fields = [
   { name: 'color_primario', label: 'Color Primario', type: 'color' },
   { name: 'color_secundario', label: 'Color Secundario', type: 'color' },
   { name: 'logo', label: 'Logo', type: 'file' },
-  { name: 'id_formacion', label: 'Formación', type: 'select', optionsKey: 'formaciones', required: true },
+  {
+    name: 'id_formacion',
+    label: 'Formación',
+    type: 'select',
+    optionsKey: 'formaciones',
+    optionValue: 'id',
+    optionLabel: 'nombre',
+    required: false
+  },
   { name: 'instagram', label: 'Instagram', type: 'text' },
   { name: 'twitch', label: 'Twitch', type: 'text' },
   { name: 'youtube', label: 'YouTube', type: 'text' },
-  { name: 'id_usuario', label: 'Usuario Responsable', type: 'select', optionsKey: 'usuarios', required: true }
+  {
+    name: 'id_usuario',
+    label: 'Propietario Responsable',
+    type: 'select',
+    optionsKey: 'usuarios',
+    optionValue: 'id',
+    optionLabel: 'name',
+    required: false
+  },
+  {
+    name: 'id_usuario2',
+    label: 'Entrenador Responsable',
+    type: 'select',
+    optionsKey: 'usuarios',
+    optionValue: 'id',
+    optionLabel: 'name',
+    required: false
+  }
 ]
 </script>
 
