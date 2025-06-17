@@ -56,8 +56,9 @@ const pagesToShow = computed(() => {
   const current = currentPage.value
   const delta = 2
   const pages = []
-  if (total <= 7) for (let i = 1; i <= total; i++) pages.push(i)
-  else {
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+  } else {
     const left = Math.max(2, current - delta)
     const right = Math.min(total - 1, current + delta)
     pages.push(1)
@@ -70,7 +71,12 @@ const pagesToShow = computed(() => {
 })
 
 function sortBy(key) {
-  sortKey.value === key ? (sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc') : (sortKey.value = key, sortOrder.value = 'asc')
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortOrder.value = 'asc'
+  }
 }
 
 function goToPage(page) {

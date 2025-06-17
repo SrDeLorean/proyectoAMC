@@ -1,26 +1,45 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 
-const model = defineModel({
+// Props para v-model
+const props = defineProps({
+  modelValue: {
     type: String,
     required: true,
+  },
 });
+
+const emit = defineEmits(['update:modelValue']);
 
 const input = ref(null);
+const internalValue = ref(props.modelValue);
 
-onMounted(() => {
-    if (input.value.hasAttribute('autofocus')) {
-        input.value.focus();
-    }
+// Sincronizar cambios externos al prop
+watch(() => props.modelValue, (val) => {
+  internalValue.value = val;
 });
 
-defineExpose({ focus: () => input.value.focus() });
+// Emitir cambios internos al padre
+watch(internalValue, (val) => {
+  emit('update:modelValue', val);
+});
+
+onMounted(() => {
+  if (input.value?.hasAttribute('autofocus')) {
+    input.value.focus();
+  }
+});
+
+defineExpose({
+  focus: () => input.value?.focus(),
+});
 </script>
 
 <template>
-    <input
-        class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-        v-model="model"
-        ref="input"
-    />
+  <input
+    class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+    v-model="internalValue"
+    ref="input"
+    autofocus
+  />
 </template>

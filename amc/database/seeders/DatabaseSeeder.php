@@ -8,6 +8,11 @@ use Database\Seeders\FormacionSeeder;
 use Illuminate\Database\Seeder;
 
 use Database\Seeders\EquipoSeeder;
+use Database\Seeders\TemporadaSeeder;
+use Database\Seeders\CompetenciaSeeder;
+use Database\Seeders\TemporadaCompetenciaSeeder;
+use Database\Seeders\TemporadaEquipoSeeder;
+
 
 class DatabaseSeeder extends Seeder
 {
@@ -21,5 +26,9 @@ class DatabaseSeeder extends Seeder
         $this->call(UserSeeder::class);
         $this->call(FormacionSeeder::class);
         $this->call(EquipoSeeder::class);
+        $this->call(TemporadaSeeder::class);
+        $this->call(CompetenciaSeeder::class);
+        $this->call(TemporadaCompetenciaSeeder::class);
+        $this->call(TemporadaEquipoSeeder::class);
     }
 }

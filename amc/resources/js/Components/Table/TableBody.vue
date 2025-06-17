@@ -47,10 +47,10 @@ const getFotoUrl = (foto) => {
             <span>{{ column.label }}</span>
             <span v-if="sortKey === column.key && column.key !== 'equipos'" class="ml-1">
               <svg v-if="sortOrder === 'asc'" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none">
-                <path stroke="currentColor" stroke-width="2" d="M5 15l7-7 7 7"/>
+                <path stroke="currentColor" stroke-width="2" d="M5 15l7-7 7 7" />
               </svg>
               <svg v-else class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none">
-                <path stroke="currentColor" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                <path stroke="currentColor" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </span>
           </div>
@@ -70,12 +70,10 @@ const getFotoUrl = (foto) => {
           :key="column.key"
           class="px-6 py-4 align-middle whitespace-nowrap"
         >
-          <!-- Slot personalizado para columna -->
           <slot
             :name="`cell_${column.key}`"
             :row="row"
           >
-            <!-- Renderizado estándar si no hay slot -->
             <template v-if="column.key.includes('color_')">
               <div
                 class="w-6 h-6 rounded border border-gray-500"
@@ -85,11 +83,13 @@ const getFotoUrl = (foto) => {
             </template>
 
             <template v-else-if="isImageUrl(getNestedValue(row, column.key))">
-              <img
-                :src="getFotoUrl(getNestedValue(row, column.key))"
-                alt="Imagen"
-                class="w-10 h-10 object-cover rounded-full ring-2 ring-red-600"
-              />
+              <div class="w-10 h-10 rounded-full ring-2 ring-red-600 overflow-hidden flex items-center justify-center bg-gray-900">
+                <img
+                  :src="getFotoUrl(getNestedValue(row, column.key))"
+                  alt="Imagen"
+                  class="max-w-full max-h-full object-contain"
+                />
+              </div>
             </template>
 
             <template v-else>

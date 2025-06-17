@@ -1,113 +1,205 @@
 <script setup>
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue'
+import { useForm, Head, Link } from '@inertiajs/vue3'
+import GuestLayout from '@/Layouts/GuestLayout.vue'
+import InputLabel from '@/Components/InputLabel.vue'
+import TextInput from '@/Components/TextInput.vue'
+import InputError from '@/Components/InputError.vue'
+import PrimaryButton from '@/Components/PrimaryButton.vue'
 
 const form = useForm({
-    name: '',
-    email: '',
-    password: '',
-    password_confirmation: '',
-});
+  name: '',
+  email: '',
+  password: '',
+  password_confirmation: '',
+  id_ea: '', // nuevo campo
+})
+
+const passwordType = ref('password')
+const togglePassword = () => {
+  passwordType.value = passwordType.value === 'password' ? 'text' : 'password'
+}
 
 const submit = () => {
-    form.post(route('register'), {
-        onFinish: () => form.reset('password', 'password_confirmation'),
-    });
-};
+  form.post(route('register'), {
+    onFinish: () => form.reset('password', 'password_confirmation'),
+  })
+}
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Register" />
+  <GuestLayout>
+    <Head title="Registrarse" />
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="name" value="Name" />
-
-                <TextInput
-                    id="name"
-                    type="text"
-                    class="mt-1 block w-full"
-                    v-model="form.name"
-                    required
-                    autofocus
-                    autocomplete="name"
-                />
-
-                <InputError class="mt-2" :message="form.errors.name" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel for="email" value="Email" />
-
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autocomplete="username"
-                />
-
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
-
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
-                    required
-                    autocomplete="new-password"
-                />
-
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel
-                    for="password_confirmation"
-                    value="Confirm Password"
-                />
-
-                <TextInput
-                    id="password_confirmation"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password_confirmation"
-                    required
-                    autocomplete="new-password"
-                />
-
-                <InputError
-                    class="mt-2"
-                    :message="form.errors.password_confirmation"
-                />
-            </div>
-
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    :href="route('login')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+    <div class="min-h-screen flex bg-gray-900 text-gray-100">
+      <!-- Lado izquierdo -->
+      <div class="hidden lg:flex w-1/2 bg-gray-800 text-red-500 flex-col justify-center px-16">
+        <div class="text-center">
+            <div class="mb-10">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="mx-auto h-12 w-12 text-red-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
                 >
-                    Already registered?
-                </Link>
-
-                <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    Register
-                </PrimaryButton>
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="white" />
+                <path
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    d="M12 3v18M3 12h18M7.5 7.5l9 9M7.5 16.5l9-9"
+                />
+                <path
+                    stroke="currentColor"
+                    stroke-width="1"
+                    d="M12 6l-1 3 3 1-3 1 1 3 1-3 3-1-3-1 1-3z"
+                    fill="none"
+                />
+            </svg>
             </div>
+            <h1 class="text-4xl font-bold mb-2">Comunidad AMC</h1>
+            <h2 class="text-xl font-semibold mb-6 text-gray-300">Torneos de EA FC</h2>
+            <p class="text-lg max-w-md mx-auto text-gray-300">
+            Únete a nuestra comunidad y participa en emocionantes torneos de EA FC. Vive la competencia y mejora tu juego con nosotros.
+            </p>
+            <p class="mt-10 text-sm text-gray-500">&copy; 2025 Comunidad AMC. Todos los derechos reservados.</p>
+        </div>
+      </div>
+
+      <!-- Lado derecho -->
+      <div class="flex flex-col justify-center w-full lg:w-1/2 bg-gray-900 px-12 py-20">
+        <h2 class="text-2xl font-bold mb-2 text-white">Crear una cuenta</h2>
+        <p class="mb-8 text-sm text-gray-400">
+          ¿Ya tienes una cuenta?
+          <Link href="/login" class="underline text-red-500 hover:text-red-700">
+            Inicia sesión aquí
+          </Link>
+          .
+        </p>
+
+        <form @submit.prevent="submit" class="space-y-6 max-w-md">
+          <div>
+            <InputLabel for="name" value="Nombre" class="text-gray-300" />
+            <TextInput
+              id="name"
+              type="text"
+              class="mt-1 block w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-gray-100 placeholder-gray-500"
+              v-model="form.name"
+              required
+              autofocus
+              autocomplete="name"
+            />
+            <InputError :message="form.errors.name" class="mt-1 text-red-500" />
+          </div>
+
+          <div>
+            <InputLabel for="email" value="Correo electrónico" class="text-gray-300" />
+            <TextInput
+              id="email"
+              type="email"
+              class="mt-1 block w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-gray-100 placeholder-gray-500"
+              v-model="form.email"
+              required
+              autocomplete="username"
+            />
+            <InputError :message="form.errors.email" class="mt-1 text-red-500" />
+          </div>
+
+          <div>
+            <InputLabel for="id_ea" value="ID EA" class="text-gray-300" />
+            <TextInput
+              id="id_ea"
+              type="text"
+              class="mt-1 block w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-gray-100 placeholder-gray-500"
+              v-model="form.id_ea"
+              autocomplete="off"
+            />
+            <InputError :message="form.errors.id_ea" class="mt-1 text-red-500" />
+          </div>
+
+          <div>
+            <InputLabel for="password" value="Contraseña" class="text-gray-300" />
+            <div class="relative">
+              <TextInput
+                :type="passwordType"
+                id="password"
+                class="mt-1 block w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 pr-10 text-gray-100 placeholder-gray-500"
+                v-model="form.password"
+                required
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                @click="togglePassword"
+                class="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-200 focus:outline-none"
+                tabindex="-1"
+                aria-label="Alternar visibilidad de contraseña"
+              >
+                <svg
+                  v-if="passwordType === 'password'"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+                <svg
+                  v-else
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.973 9.973 0 012.119-3.35m1.618-1.618A9.97 9.97 0 0112 5c4.477 0 8.268 2.943 9.542 7a9.985 9.985 0 01-4.152 5.17M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18" />
+                </svg>
+              </button>
+            </div>
+            <InputError :message="form.errors.password" class="mt-1 text-red-500" />
+          </div>
+
+          <div>
+            <InputLabel for="password_confirmation" value="Confirmar contraseña" class="text-gray-300" />
+            <TextInput
+              id="password_confirmation"
+              type="password"
+              class="mt-1 block w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-gray-100 placeholder-gray-500"
+              v-model="form.password_confirmation"
+              required
+              autocomplete="new-password"
+            />
+            <InputError :message="form.errors.password_confirmation" class="mt-1 text-red-500" />
+          </div>
+
+          <PrimaryButton
+            type="submit"
+            class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded flex justify-center"
+            :disabled="form.processing"
+          >
+            Registrarse
+          </PrimaryButton>
         </form>
-    </GuestLayout>
+      </div>
+    </div>
+  </GuestLayout>
 </template>

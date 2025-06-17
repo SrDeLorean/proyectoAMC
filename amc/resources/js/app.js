@@ -1,11 +1,14 @@
 import '../css/app.css';
 import './bootstrap';
+import axios from 'axios'
 
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+
+axios.defaults.baseURL = window.location.origin
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

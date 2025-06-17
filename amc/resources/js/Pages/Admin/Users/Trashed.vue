@@ -3,6 +3,7 @@ import { router } from '@inertiajs/vue3'
 import Swal from 'sweetalert2'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import BaseTable from '@/Components/Table/DataTable.vue'
+import ActionButtons from '@/Components/ActionButtons.vue'  // Importa el componente
 
 const props = defineProps({
   users: Array,
@@ -24,6 +25,16 @@ const actions = [
     label: 'Restaurar',
     class: 'text-green-500 hover:text-green-700 transition',
     actionName: 'restore'
+  }
+]
+
+// Botones para la parte superior derecha
+const buttons = [
+  {
+    label: '← Volver a Usuarios Activos',
+    href: '/admin/usuarios',
+    colorClass: 'bg-gray-700 hover:bg-gray-800',
+    title: 'Usuarios activos'
   }
 ]
 
@@ -50,19 +61,16 @@ function onTableAction({ actionName, row }) {
   <AdminLayout>
     <template #title>Usuarios Eliminados</template>
     <div class="p-6">
-
-      <div class="mb-6 flex justify-between items-center">
+      <div class="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 class="text-2xl font-bold text-white">Usuarios Eliminados</h1>
-        <a
-          href="/admin/usuarios"
-          class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded transition"
-        >
-          ← Volver a Usuarios Activos
-        </a>
+        <!-- Aquí usamos ActionButtons -->
+        <ActionButtons :buttons="buttons" />
       </div>
 
-      <!-- Mensaje flash -->
-      <div v-if="success" class="mb-4 p-3 bg-green-600 text-white rounded shadow">
+      <div
+        v-if="success"
+        class="mb-4 p-3 bg-green-600 text-white rounded shadow transition-opacity duration-500"
+      >
         {{ success }}
       </div>
 

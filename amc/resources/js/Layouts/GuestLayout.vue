@@ -25,7 +25,7 @@ const showingNavigationDropdown = ref(false)
             <!-- Desktop Navigation -->
             <div class="hidden sm:flex space-x-4 text-sm font-medium">
               <Link href="/" class="hover:text-gray-300">Inicio</Link>
-              <Link href="/competencias" class="hover:text-gray-300">Competencias AMC</Link>
+              <Link href="/competenciasguest" class="hover:text-gray-300">Competencias AMC</Link>
               <Link href="/noticias" class="hover:text-gray-300">Noticias</Link>
             </div>
           </div>

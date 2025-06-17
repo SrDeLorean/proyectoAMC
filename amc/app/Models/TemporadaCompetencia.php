@@ -42,4 +42,36 @@ class TemporadaCompetencia extends Model
     {
         return $this->hasMany(Calendario::class, 'id_temporadacompetencia');
     }
+
+    public function temporadaEquipos()
+    {
+        return $this->hasMany(TemporadaEquipo::class, 'id_temporadacompetencia');
+    }
+
+
+    public function obtenerTablaClasificacion()
+    {
+        return $this->temporadaEquipos()
+            ->with('equipo')
+            ->get()
+            ->map(function($temporadaEquipo) {
+                return [
+                    'id' => $temporadaEquipo->equipo->id,
+                    'nombre' => $temporadaEquipo->equipo->nombre,
+                    'puntos' => $temporadaEquipo->puntos,
+                    'partidos_jugados' => $temporadaEquipo->partidos_jugados,
+                    'victorias' => $temporadaEquipo->victorias,
+                    'empates' => $temporadaEquipo->empates,
+                    'derrotas' => $temporadaEquipo->derrotas,
+                    'goles_a_favor' => $temporadaEquipo->goles_a_favor,
+                    'goles_en_contra' => $temporadaEquipo->goles_en_contra,
+                    'diferencia_goles' => $temporadaEquipo->goles_a_favor - $temporadaEquipo->goles_en_contra,
+                ];
+            })
+            ->sortByDesc('puntos')
+            ->values()
+            ->toArray();
+    }
+
+
 }

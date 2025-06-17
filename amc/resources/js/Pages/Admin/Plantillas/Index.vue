@@ -1,17 +1,25 @@
 <script setup>
 import { router } from '@inertiajs/vue3'
 import Swal from 'sweetalert2'
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import BaseTable from '@/Components/Table/DataTable.vue'
+import ActionButtons from '@/Components/ActionButtons.vue'
 
 const props = defineProps({
-  plantillas: Object,     // paginadas
+  plantillas: Object,
   success: String,
-  trashed: Boolean        // true si estamos en /trashed
+  trashed: Boolean,
 })
 
-// Columnas base
+const localSuccess = ref(props.success)
+watch(() => props.success, val => {
+  localSuccess.value = val
+  if (val) {
+    setTimeout(() => (localSuccess.value = ''), 3000)
+  }
+})
+
 const baseColumns = [
   { label: 'ID', key: 'id' },
   { label: 'Equipo', key: 'equipo.nombre' },
@@ -21,44 +29,64 @@ const baseColumns = [
   { label: 'Número', key: 'numero' },
 ]
 
-// Si está en papelera, se agrega columna de fecha de eliminación
 const columns = computed(() =>
   props.trashed
     ? [...baseColumns, { label: 'Eliminado el', key: 'deleted_at' }]
     : baseColumns
 )
 
-const actions = computed(() => {
-  return props.trashed
+const actions = computed(() =>
+  props.trashed
     ? [
         {
           label: 'Restaurar',
           class: 'text-green-500 hover:text-green-700 transition',
-          actionName: 'restore'
-        }
+          actionName: 'restore',
+        },
       ]
     : [
         {
           label: 'Editar',
           class: 'text-blue-400 hover:text-blue-600 transition',
-          actionName: 'edit'
+          actionName: 'edit',
         },
         {
           label: 'Eliminar',
           class: 'text-red-500 hover:text-red-700 transition',
-          actionName: 'delete'
-        }
+          actionName: 'delete',
+        },
       ]
-})
+)
+
+const buttons = computed(() =>
+  props.trashed
+    ? [
+        {
+          label: '← Volver a activos',
+          href: '/admin/plantillas',
+          colorClass: 'bg-gray-700 hover:bg-gray-800',
+        },
+      ]
+    : [
+        {
+          label: '+ Crear Plantilla',
+          href: '/admin/plantillas/create',
+          colorClass: 'bg-red-600 hover:bg-red-700',
+        },
+        {
+          label: '🗑️ Ver Eliminadas',
+          href: '/admin/plantillas/trashed',
+          colorClass: 'bg-gray-700 hover:bg-gray-800',
+        },
+      ]
+)
 
 function onTableAction({ actionName, row }) {
   const jugador = row.jugador?.name || 'jugador desconocido'
 
   if (actionName === 'edit') {
     router.get(`/admin/plantillas/${row.id}/edit`)
-  }
-
-  if (actionName === 'delete') {
+  } else if (actionName === 'delete') {
     Swal.fire({
       title: `¿Eliminar la plantilla del jugador ${jugador}?`,
       text: 'Esta acción no se puede deshacer',
@@ -67,15 +95,11 @@ function onTableAction({ actionName, row }) {
       confirmButtonColor: '#e30613',
       cancelButtonColor: '#6b7280',
       confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
     }).then(result => {
-      if (result.isConfirmed) {
-        router.delete(`/admin/plantillas/${row.id}`)
-      }
+      if (result.isConfirmed) router.delete(`/admin/plantillas/${row.id}`)
     })
-  }
-
-  if (actionName === 'restore') {
+  } else if (actionName === 'restore') {
     Swal.fire({
       title: `¿Restaurar la plantilla del jugador ${jugador}?`,
       icon: 'question',
@@ -83,11 +107,9 @@ function onTableAction({ actionName, row }) {
       confirmButtonColor: '#22c55e',
       cancelButtonColor: '#6b7280',
       confirmButtonText: 'Sí, restaurar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
     }).then(result => {
-      if (result.isConfirmed) {
-        router.post(`/admin/plantillas/${row.id}/restore`)
-      }
+      if (result.isConfirmed) router.post(`/admin/plantillas/${row.id}/restore`)
     })
   }
 }
@@ -100,55 +122,35 @@ function onTableAction({ actionName, row }) {
     </template>
 
     <div class="p-6 space-y-6">
-      <!-- Mensaje de éxito -->
-      <div v-if="success" class="p-3 bg-green-600 text-white rounded shadow">
-        {{ success }}
+      <div
+        v-if="localSuccess"
+        class="p-3 bg-green-600 text-white rounded shadow transition-opacity duration-500"
+      >
+        {{ localSuccess }}
       </div>
 
-      <!-- Encabezado + Botones -->
-      <div class="flex justify-between items-center">
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 class="text-2xl font-bold text-white">
           {{ trashed ? 'Plantillas Eliminadas' : 'Plantillas' }}
         </h1>
-        <div class="flex gap-3">
-          <template v-if="trashed">
-            <a
-              href="/admin/plantillas"
-              class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded transition"
-            >
-              ← Volver a activos
-            </a>
-          </template>
-          <template v-else>
-            <a
-              href="/admin/plantillas/create"
-              class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition"
-            >
-              + Crear Plantilla
-            </a>
-            <a
-              href="/admin/plantillas/trashed"
-              class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded transition"
-            >
-              🗑️ Ver Eliminadas
-            </a>
-          </template>
-        </div>
+
+        <ActionButtons :buttons="buttons" />
       </div>
 
-      <!-- Tabla -->
       <BaseTable
         :columns="columns"
         :rows="plantillas.data"
         :actions="actions"
         @action="onTableAction"
       >
-        <template #cell-jugador.foto="{ row }">
+        <template #cell-jugador\.foto="{ row }">
           <img
+            v-if="row.jugador?.foto"
             :src="row.jugador.foto"
             alt="Foto jugador"
             class="w-10 h-10 rounded-full object-cover"
           />
+          <div v-else class="w-10 h-10 bg-gray-600 rounded-full"></div>
         </template>
       </BaseTable>
     </div>

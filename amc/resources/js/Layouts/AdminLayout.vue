@@ -11,10 +11,8 @@ const props = defineProps({
 const page = usePage()
 const user = computed(() => page.props.auth?.user ?? null)
 
-// Ref para controlar la visibilidad del menú
 const showingMenu = ref(false)
 
-// Funciones para manejar eventos mouseenter y mouseleave
 function onMouseEnter() {
   showingMenu.value = true
 }
@@ -23,7 +21,6 @@ function onMouseLeave() {
   showingMenu.value = false
 }
 
-// Función para alternar el menú con click
 function toggleMenu() {
   showingMenu.value = !showingMenu.value
 }
@@ -76,8 +73,8 @@ function toggleMenu() {
               </NavLink>
 
               <NavLink
-                :href="route('equipos.index')"
-                :active="route().current('equipos.index')"
+                :href="route('admin.equipos.index')"
+                :active="route().current('admin.equipos.index')"
                 v-if="user?.role === 'administrador'"
                 class="block text-white hover:text-red-500 mb-1"
                 active-class="bg-gray-900 text-red-500 rounded-md px-3 py-2"
@@ -103,8 +100,8 @@ function toggleMenu() {
               </h3>
 
               <NavLink
-                :href="route('temporadas.index')"
-                :active="route().current('temporadas.index')"
+                :href="route('admin.temporadas.index')"
+                :active="route().current('admin.temporadas.index')"
                 v-if="user?.role === 'administrador'"
                 class="block text-white hover:text-red-500 mb-1"
                 active-class="bg-gray-900 text-red-500 rounded-md px-3 py-2"
@@ -113,8 +110,8 @@ function toggleMenu() {
               </NavLink>
 
               <NavLink
-                :href="route('competencias.index')"
-                :active="route().current('competencias.index')"
+                :href="route('admin.competencias.index')"
+                :active="route().current('admin.competencias.index')"
                 v-if="user?.role === 'administrador'"
                 class="block text-white hover:text-red-500 mb-1"
                 active-class="bg-gray-900 text-red-500 rounded-md px-3 py-2"
@@ -123,22 +120,23 @@ function toggleMenu() {
               </NavLink>
 
               <NavLink
-                :href="route('temporada-competencias.index')"
-                :active="route().current('temporada-competencias.index')"
+                :href="route('admin.temporada-competencias.index')"
+                :active="route().current('admin.temporada-competencias.index')"
                 v-if="user?.role === 'administrador'"
-                class="block text-white hover:text-red-500"
+                class="block text-white hover:text-red-500 mb-1"
                 active-class="bg-gray-900 text-red-500 rounded-md px-3 py-2"
               >
                 Temporada Competencia
               </NavLink>
+
               <NavLink
-                :href="route('temporada-equipos.index')"
-                :active="route().current('temporada-equipos.index')"
+                :href="route('admin.calendarios.index')"
+                :active="route().current('admin.calendarios.index')"
                 v-if="user?.role === 'administrador'"
                 class="block text-white hover:text-red-500"
                 active-class="bg-gray-900 text-red-500 rounded-md px-3 py-2"
               >
-                Temporada equipos
+                Calendario
               </NavLink>
             </div>
           </div>

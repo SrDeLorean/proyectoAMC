@@ -9,7 +9,18 @@ class TemporadaEquipo extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['id_temporadacompetencia', 'id_equipo'];
+    protected $fillable = [
+        'id_temporadacompetencia',
+        'id_equipo',
+        'puntos',
+        'partidos_jugados',
+        'victorias',
+        'empates',
+        'derrotas',
+        'goles_a_favor',
+        'goles_en_contra',
+        'diferencia_goles',
+    ];
 
     public function temporadaCompetencia()
     {
@@ -18,6 +29,6 @@ class TemporadaEquipo extends Model
 
     public function equipo()
     {
-        return $this->belongsTo(Equipo::class, 'id_equipo'); // Asumiendo que existe un modelo `Equipo`
+        return $this->belongsTo(Equipo::class, 'id_equipo');
     }
 }
