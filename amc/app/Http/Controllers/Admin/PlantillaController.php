@@ -14,12 +14,28 @@ use Inertia\Inertia;
 
 class PlantillaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $plantillas = Plantilla::latest()->paginate(10);
+        $search = $request->input('search', '');
+        $perPage = $request->input('perPage', 10);
+
+        $query = Plantilla::with(['jugador', 'equipo']);
+
+        if ($search) {
+            $query->whereHas('jugador', fn($q) => $q->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('equipo', fn($q) => $q->where('nombre', 'like', "%{$search}%"))
+                ->orWhere('posicion', 'like', "%{$search}%")
+                ->orWhere('numero', 'like', "%{$search}%");
+        }
+
+        $plantillas = $query->latest()->paginate($perPage)->withQueryString();
 
         return Inertia::render('Admin/Plantillas/Index', [
             'plantillas' => $plantillas,
+            'filters' => [
+                'search' => $search,
+                'perPage' => $perPage,
+            ],
             'success' => session('success'),
         ]);
     }

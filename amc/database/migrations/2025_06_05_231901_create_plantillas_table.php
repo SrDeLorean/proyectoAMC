@@ -12,6 +12,7 @@ class CreatePlantillasTable extends Migration
             $table->id();
             $table->foreignId('id_equipo')->constrained('equipos')->onDelete('cascade');
             $table->foreignId('id_jugador')->constrained('users')->onDelete('cascade');
+            $table->string('rol');
             $table->string('posicion');
             $table->integer('numero');
             $table->timestamps();

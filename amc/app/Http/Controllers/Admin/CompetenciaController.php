@@ -8,15 +8,35 @@ use App\Models\Competencia;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
+
 
 class CompetenciaController extends Controller
 {
-    public function index()
-    {
-        $competencias = Competencia::all();
 
-        return Inertia::render('Admin/Competencias/Index', [
+    private const DEFAULT_LOGO = 'images/competencias/default-logo.png';
+
+    public function index(Request $request)
+    {
+        $search = $request->input('search', '');
+        $perPage = $request->input('perPage', 10);
+
+        $query = Competencia::query();
+
+        if ($search) {
+            $query->where('nombre', 'like', "%{$search}%")
+                ->orWhere('id', 'like', "%{$search}%");
+        }
+
+        $competencias = $query->latest()->paginate($perPage)->withQueryString();
+
+        return inertia('Admin/Competencias/Index', [
             'competencias' => $competencias,
+            'filters' => [
+                'search' => $search,
+                'perPage' => $perPage,
+            ],
+            'success' => Session::get('success'),
         ]);
     }
 
@@ -27,26 +47,34 @@ class CompetenciaController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'nombre' => 'required|string|max:255',
+            'logo'   => 'nullable|image|max:2048',
         ]);
 
-        Competencia::create($request->only([
-            'nombre',
-        ]));
+        if ($request->hasFile('logo')) {
+            $logo = $request->file('logo');
+            $filename = uniqid() . '.' . $logo->getClientOriginalExtension();
+            $logo->move(public_path('images/competencias'), $filename);
+            $logoPath = 'images/competencias/' . $filename;
+        } else {
+            $logoPath = self::DEFAULT_LOGO;
+        }
 
-        return redirect()
-            ->route('competencias.index')
-            ->with('success', 'Competencia creada correctamente.');
+        Competencia::create([
+            'nombre' => $request->nombre,
+            'logo'   => $logoPath,
+        ]);
+
+        Session::flash('success', 'Competencia creada correctamente.');
+
+        return redirect()->route('competencias.index');
     }
 
     public function edit(Competencia $competencia)
     {
         return Inertia::render('Admin/Competencias/Edit', [
-            'competencia' => [
-                'id' => $competencia->id,
-                'nombre' => $competencia->nombre,
-            ],
+            'competencia' => $competencia,
         ]);
     }
 
@@ -54,9 +82,29 @@ class CompetenciaController extends Controller
     {
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
+            'logo'   => 'nullable|image|max:2048',
         ]);
 
-        $competencia->update($validated);
+        // Manejo del logo
+        if ($request->hasFile('logo')) {
+            $logo = $request->file('logo');
+
+            // Eliminar logo anterior si no es el default
+            if (
+                $competencia->logo &&
+                $competencia->logo !== self::DEFAULT_LOGO &&
+                file_exists(public_path($competencia->logo))
+            ) {
+                unlink(public_path($competencia->logo));
+            }
+
+            $filename = uniqid() . '.' . $logo->getClientOriginalExtension();
+            $logo->move(public_path('images/competencias'), $filename);
+            $competencia->logo = 'images/competencias/' . $filename;
+        }
+
+        $competencia->nombre = $validated['nombre'];
+        $competencia->save();
 
         Session::flash('success', 'Competencia actualizada correctamente.');
 

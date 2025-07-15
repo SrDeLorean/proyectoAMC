@@ -13,13 +13,30 @@ class UserController extends Controller
 {
     private const DEFAULT_foto = 'images/users/default-user.png';
 
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::all();
+        $search = $request->input('search', '');
+        $perPage = $request->input('perPage', 10);
+
+        $query = User::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('id_ea', 'like', "%{$search}%")
+                ->orWhere('id', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
-            // Pasa el flash explícitamente desde sesión
+            'filters' => [
+                'search' => $search,
+                'perPage' => $perPage,
+            ],
             'success' => Session::get('success'),
         ]);
     }

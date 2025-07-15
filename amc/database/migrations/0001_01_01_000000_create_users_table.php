@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->enum('role', ['jugador', 'entrenador', 'administrador'])->default('jugador');
-            $table->string('foto')->default('fotos/default.png'); // Ruta por defecto
+            $table->string('foto')->default('images/users/default-user.png'); // Ruta por defecto
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();  // <-- aquí

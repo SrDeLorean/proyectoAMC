@@ -17,7 +17,6 @@ class EquipoSeeder extends Seeder
             'AYSEN ESPORTS',
             'DEPORTES CONCEPCIÓN',
             'WHISKOLA ESPORTS',
-            'SUCCESSORS',
             'MUNI MUNI ESP',
             'GRIZZLY GAMING',
             'JUVENTUD AVANCE ESP',

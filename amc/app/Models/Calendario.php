@@ -12,9 +12,11 @@ class Calendario extends Model
         'id_temporadacompetencia',
         'equipo_local_id',
         'equipo_visitante_id',
+        'goles_equipo_local',
+        'goles_equipo_visitante',
+        'jornada',
         'fecha',
         'hora',
-        'lugar',
     ];
 
     public function temporadaCompetencia()

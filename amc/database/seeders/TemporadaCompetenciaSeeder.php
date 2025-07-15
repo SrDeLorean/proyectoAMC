@@ -18,33 +18,43 @@ class TemporadaCompetenciaSeeder extends Seeder
         TemporadaCompetencia::create([
             'nombre' => '2025 - Liga Profesional',
             'id_temporada' => $temporada->id,
-            'id_competencia' => $competencias['Liga Profesional'],
+            'id_competencia' => $competencias['AMC ProLeague'],
             'fecha_inicio' => '2025-03-01',
             'fecha_termino' => '2025-10-15',
         ]);
 
         TemporadaCompetencia::create([
-            'nombre' => '2025 - Primera División',
+            'nombre' => '2025 - Liga Elite',
             'id_temporada' => $temporada->id,
-            'id_competencia' => $competencias['Primera División'],
-            'fecha_inicio' => '2025-03-05',
-            'fecha_termino' => '2025-10-20',
+            'id_competencia' => $competencias['Liga Elite'],
+            'fecha_inicio' => '2025-03-01',
+            'fecha_termino' => '2025-10-15',
         ]);
 
         TemporadaCompetencia::create([
-            'nombre' => '2025 - Segunda División',
+            'nombre' => '2025 - Liga Ascenso',
             'id_temporada' => $temporada->id,
-            'id_competencia' => $competencias['Segunda División'],
-            'fecha_inicio' => '2025-03-10',
-            'fecha_termino' => '2025-10-25',
+            'id_competencia' => $competencias['Liga Ascenso'],
+            'fecha_inicio' => '2025-03-01',
+            'fecha_termino' => '2025-10-15',
         ]);
 
         TemporadaCompetencia::create([
-            'nombre' => '2025 - Relámpago de Verano',
+            'nombre' => '2025 - Liga Anfa',
+            'id_temporada' => $temporada->id,
+            'id_competencia' => $competencias['Liga Anfa'],
+            'fecha_inicio' => '2025-03-01',
+            'fecha_termino' => '2025-10-15',
+        ]);
+
+        TemporadaCompetencia::create([
+            'nombre' => '2025 - Relámpago',
             'id_temporada' => $temporada->id,
             'id_competencia' => $competencias['Relampago'],
-            'fecha_inicio' => '2025-01-10',
-            'fecha_termino' => '2025-02-10',
+            'fecha_inicio' => '2025-03-01',
+            'fecha_termino' => '2025-10-15',
         ]);
+
+
     }
 }

@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\TemporadaCompetenciaController;
 use App\Http\Controllers\Admin\CalendarioController;
 use App\Http\Controllers\Admin\TemporadaEquipoController;
 use App\Http\Controllers\Admin\EquipoController; // <- ESTA ES LA NUEVA IMPORTACIÓN
+use App\Http\Controllers\Admin\EstadisticaEquipoController;
 
 // Dashboard
 Route::get('/dashboard', fn () => Inertia::render('Admin/Dashboard'))->name('dashboard');
@@ -93,3 +94,6 @@ Route::prefix('equipos')->name('equipos.')->group(function () {
     Route::get('/trashed', [EquipoController::class, 'trashed'])->name('trashed');
     Route::post('/{id}/restore', [EquipoController::class, 'restore'])->name('restore');
 });
+
+
+Route::post('/estadisticas/subir', [EstadisticaEquipoController::class, 'subirDesdeImagen'])->name('estadisticas.subir');

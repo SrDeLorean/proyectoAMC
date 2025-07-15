@@ -10,7 +10,7 @@ class Competencia extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['nombre'];
+    protected $fillable = ['nombre', 'logo'];
 
     public function temporadaCompetencias()
     {

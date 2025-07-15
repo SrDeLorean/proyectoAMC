@@ -7,7 +7,8 @@ import BaseTable from '@/Components/Table/DataTable.vue'
 import ActionButtons from '@/Components/ActionButtons.vue'
 
 const props = defineProps({
-  plantillas: Object,
+  plantillas: Object,   // { data, meta, links }
+  filters: Object,      // { search, perPage }
   success: String,
   trashed: Boolean,
 })
@@ -20,6 +21,23 @@ watch(() => props.success, val => {
   }
 })
 
+// Filtros
+const search = ref(props.filters?.search || '')
+const perPage = ref(props.filters?.perPage || 10)
+
+let timeout = null
+watch([search, perPage], ([newSearch, newPerPage]) => {
+  clearTimeout(timeout)
+  timeout = setTimeout(() => {
+    router.get(
+      '/admin/plantillas',
+      { search: newSearch, perPage: newPerPage },
+      { preserveState: true, replace: true }
+    )
+  }, 300)
+})
+
+// Columnas
 const baseColumns = [
   { label: 'ID', key: 'id' },
   { label: 'Equipo', key: 'equipo.nombre' },
@@ -35,6 +53,7 @@ const columns = computed(() =>
     : baseColumns
 )
 
+// Acciones
 const actions = computed(() =>
   props.trashed
     ? [
@@ -58,6 +77,7 @@ const actions = computed(() =>
       ]
 )
 
+// Botones
 const buttons = computed(() =>
   props.trashed
     ? [
@@ -122,6 +142,7 @@ function onTableAction({ actionName, row }) {
     </template>
 
     <div class="p-6 space-y-6">
+      <!-- Mensaje de éxito -->
       <div
         v-if="localSuccess"
         class="p-3 bg-green-600 text-white rounded shadow transition-opacity duration-500"
@@ -129,18 +150,23 @@ function onTableAction({ actionName, row }) {
         {{ localSuccess }}
       </div>
 
+      <!-- Encabezado -->
       <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 class="text-2xl font-bold text-white">
           {{ trashed ? 'Plantillas Eliminadas' : 'Plantillas' }}
         </h1>
-
         <ActionButtons :buttons="buttons" />
       </div>
 
+      <!-- Tabla -->
       <BaseTable
         :columns="columns"
         :rows="plantillas.data"
+        :meta="plantillas.meta"
+        :links="plantillas.links"
         :actions="actions"
+        v-model:filterText="search"
+        v-model:perPage="perPage"
         @action="onTableAction"
       >
         <template #cell-jugador\.foto="{ row }">

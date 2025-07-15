@@ -7,22 +7,13 @@ import BaseTable from '@/Components/Table/DataTable.vue'
 import ActionButtons from '@/Components/ActionButtons.vue'
 
 const props = defineProps({
-  equipos: Array,
+  equipos: Object, // paginación con: data, links, meta
+  filters: Object, // { search: '', perPage: number }
   success: String,
   trashed: Boolean,
 })
 
-const localSuccess = ref(props.success)
-
-watch(() => props.success, (newVal) => {
-  localSuccess.value = newVal
-  if (newVal) {
-    setTimeout(() => {
-      localSuccess.value = ''
-    }, 3000)
-  }
-})
-
+// Columns
 const columns = [
   { label: 'ID', key: 'id' },
   { label: 'Nombre', key: 'nombre' },
@@ -36,55 +27,46 @@ const columns = [
   { label: 'YouTube', key: 'youtube' },
   { label: 'Propietario', key: 'propietario.name' },
   { label: 'Entrenador', key: 'entrenador.name' },
-  { label: 'Acciones', key: 'actions', sortable: false },
 ]
 
+// Actions
 const actions = computed(() => {
   return props.trashed
-    ? [
-        {
-          label: 'Restaurar',
-          class: 'text-green-400 hover:text-green-600 transition',
-          actionName: 'restore',
-        },
-      ]
+    ? [{ label: 'Restaurar', actionName: 'restore' }]
     : [
-        {
-          label: 'Editar',
-          class: 'text-blue-400 hover:text-blue-600 transition',
-          actionName: 'edit',
-        },
-        {
-          label: 'Eliminar',
-          class: 'text-red-500 hover:text-red-700 transition',
-          actionName: 'delete',
-        },
+        { label: 'Editar', actionName: 'edit' },
+        { label: 'Eliminar', actionName: 'delete' },
       ]
 })
 
+// Buttons
 const buttons = computed(() => {
   return props.trashed
-    ? [
-        {
-          label: '← Volver a activos',
-          href: '/admin/equipos',
-          colorClass: 'bg-gray-700 hover:bg-gray-800',
-        },
-      ]
+    ? [{ label: '← Volver a activos', href: '/admin/equipos', colorClass: 'bg-gray-700 hover:bg-gray-800' }]
     : [
-        {
-          label: '+ Crear Equipo',
-          href: '/admin/equipos/create',
-          colorClass: 'bg-red-600 hover:bg-red-700',
-        },
-        {
-          label: '🗑️ Equipos eliminados',
-          href: '/admin/equipos/trashed',
-          colorClass: 'bg-gray-700 hover:bg-gray-800',
-        },
+        { label: '+ Crear Equipo', href: '/admin/equipos/create', colorClass: 'bg-red-600 hover:bg-red-700' },
+        { label: '🗑️ Equipos eliminados', href: '/admin/equipos/trashed', colorClass: 'bg-gray-700 hover:bg-gray-800' },
       ]
 })
 
+// Estados reactivos para filtros
+const search = ref(props.filters?.search || '')
+const perPage = ref(props.filters?.perPage || 10)
+
+// Watch para búsquedas en backend con debounce simple
+let timeout = null
+watch([search, perPage], ([newSearch, newPerPage]) => {
+  clearTimeout(timeout)
+  timeout = setTimeout(() => {
+    router.get(
+      '/admin/equipos',
+      { search: newSearch, perPage: newPerPage },
+      { preserveState: true, replace: true }
+    )
+  }, 300)
+})
+
+// Actions handler
 function onTableAction({ actionName, row }) {
   if (actionName === 'edit') {
     router.get(`/admin/equipos/${row.id}/edit`)
@@ -126,15 +108,13 @@ function onTableAction({ actionName, row }) {
     <template #title>Equipos</template>
 
     <div class="p-6">
-      <!-- Mensaje flash -->
       <div
-        v-if="localSuccess"
+        v-if="success"
         class="mb-4 p-3 bg-green-600 text-white rounded shadow transition-opacity duration-500"
       >
-        {{ localSuccess }}
+        {{ success }}
       </div>
 
-      <!-- Encabezado: título + botones -->
       <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
         <h1 class="text-2xl font-bold text-white">
           {{ trashed ? 'Equipos eliminados' : 'Lista de equipos' }}
@@ -143,11 +123,14 @@ function onTableAction({ actionName, row }) {
         <ActionButtons :buttons="buttons" />
       </div>
 
-      <!-- Tabla de datos -->
       <BaseTable
         :columns="columns"
-        :rows="equipos"
+        :rows="equipos.data"
+        :meta="equipos.meta"
+        :links="equipos.links"
         :actions="actions"
+        v-model:filterText="search"
+        v-model:perPage="perPage"
         @action="onTableAction"
       />
     </div>

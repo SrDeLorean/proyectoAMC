@@ -11,12 +11,27 @@ use Illuminate\Support\Facades\Session;
 
 class TemporadaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $temporadas = Temporada::all();
+        $search = $request->input('search', '');
+        $perPage = $request->input('perPage', 10);
 
-        return Inertia::render('Admin/Temporadas/Index', [
+        $query = Temporada::query();
+
+        if ($search) {
+            $query->where('nombre', 'like', "%{$search}%")
+                ->orWhere('id', 'like', "%{$search}%");
+        }
+
+        $temporadas = $query->latest()->paginate($perPage)->withQueryString();
+
+        return inertia('Admin/Temporadas/Index', [
             'temporadas' => $temporadas,
+            'filters' => [
+                'search' => $search,
+                'perPage' => $perPage,
+            ],
+            'success' => Session::get('success'),
         ]);
     }
 

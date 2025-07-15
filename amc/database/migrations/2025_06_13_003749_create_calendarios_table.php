@@ -13,6 +13,8 @@ class CreateCalendariosTable extends Migration
             $table->foreignId('id_temporadacompetencia')->constrained('temporada_competencias')->onDelete('cascade');
             $table->foreignId('equipo_local_id')->constrained('equipos')->onDelete('cascade');
             $table->foreignId('equipo_visitante_id')->constrained('equipos')->onDelete('cascade');
+            $table->integer('goles_equipo_local')->nullable();
+            $table->integer('goles_equipo_visitante')->nullable();
             $table->date('fecha')->nullable();
             $table->time('hora')->nullable();
             $table->string('jornada')->nullable();

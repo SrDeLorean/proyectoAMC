@@ -16,6 +16,7 @@ function getParticipante(id) {
 
 // Luminancia para decidir color texto
 function getLuminance(hexColor) {
+  if (!hexColor) return 0
   const hex = hexColor.replace('#', '')
   const r = parseInt(hex.substring(0, 2), 16) / 255
   const g = parseInt(hex.substring(2, 4), 16) / 255
@@ -59,24 +60,32 @@ function esParticipante(id) {
           v-for="(equipo, index) in equipos"
           :key="equipo.id"
           :style="{
-            backgroundColor: esParticipante(equipo.id)
-              ? (equipo.color_primario || getParticipante(equipo.id)?.color_primario || '#cccccc')
+            backgroundColor: esParticipante(equipo.equipo?.id)
+              ? (equipo.equipo?.color_primario || getParticipante(equipo.equipo?.id)?.color_primario || '#cccccc')
               : undefined
           }"
           :class="{
-            'bg-gray-800': !esParticipante(equipo.id),
-            'text-white': esParticipante(equipo.id) && isDarkColor(equipo.color_primario || getParticipante(equipo.id)?.color_primario || '#cccccc'),
-            'text-gray-900': esParticipante(equipo.id) && !isDarkColor(equipo.color_primario || getParticipante(equipo.id)?.color_primario || '#cccccc')
+            'bg-gray-800': !esParticipante(equipo.equipo?.id),
+            'text-white': esParticipante(equipo.equipo?.id) && isDarkColor(equipo.equipo?.color_primario || getParticipante(equipo.equipo?.id)?.color_primario || '#cccccc'),
+            'text-gray-900': esParticipante(equipo.equipo?.id) && !isDarkColor(equipo.equipo?.color_primario || getParticipante(equipo.equipo?.id)?.color_primario || '#cccccc')
           }"
         >
           <td class="px-3 py-2 font-bold whitespace-nowrap">{{ index + 1 }}</td>
-          <td class="px-4 py-2 text-left truncate max-w-xs" :title="equipo.nombre">
-            {{ equipo.nombre }}
+
+          <td class="px-4 py-2 text-left truncate max-w-xs flex items-center gap-2" :title="equipo.equipo?.nombre">
+            <img
+              v-if="equipo.equipo?.logo"
+              :src="equipo.equipo.logo.startsWith('/') ? equipo.equipo.logo : '/' + equipo.equipo.logo"
+              alt="Logo"
+              class="w-6 h-6 rounded-full object-contain ring-1 ring-white/30 bg-white/10"
+            />
+            <span class="truncate">{{ equipo.equipo?.nombre }}</span>
           </td>
+
           <td
             class="px-3 py-2 font-semibold whitespace-nowrap"
-            :class="esParticipante(equipo.id)
-              ? (isDarkColor(equipo.color_primario || getParticipante(equipo.id)?.color_primario || '#cccccc') ? 'text-white' : 'text-gray-900')
+            :class="esParticipante(equipo.equipo?.id)
+              ? (isDarkColor(equipo.equipo?.color_primario || getParticipante(equipo.equipo?.id)?.color_primario || '#cccccc') ? 'text-white' : 'text-gray-900')
               : 'text-red-500'"
           >
             {{ equipo.puntos }}

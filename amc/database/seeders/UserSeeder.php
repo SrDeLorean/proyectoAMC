@@ -39,6 +39,15 @@ class UserSeeder extends Seeder
             'foto' => 'images/users/default-user.png',
         ]);
 
+        User::create([
+            'name' => 'comunidadamc',
+            'email' => 'comunidadamc@gmail.com',
+            'password' => bcrypt('Galitroamc1.'),
+            'role' => 'administrador',
+            'id_ea' => 'galitro',
+            'foto' => 'images/users/default-user.png',
+        ]);
+
         // Crear 150 usuarios aleatorios usando factory
         //User::factory(150)->create();
     }

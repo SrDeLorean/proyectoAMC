@@ -16,20 +16,29 @@ class EquipoController extends Controller
 {
     private const DEFAULT_LOGO = 'images/equipos/default-equipo.png';
 
-    public function index()
+    public function index(Request $request)
     {
-        $equipos = Equipo::with(['formacion', 'propietario', 'entrenador']) // relaciones necesarias
-            ->paginate(10) // <--- paginación real
-            ->through(function ($equipo) {
-                $equipo->logo_url = $equipo->logo
-                    ? asset($equipo->logo)
-                    : asset(self::DEFAULT_LOGO);
-                return $equipo;
+        $search = $request->input('search', '');
+        $perPage = $request->input('perPage', 10);
+
+        $query = Equipo::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nombre', 'like', "%{$search}%")
+                ->orWhere('descripcion', 'like', "%{$search}%")
+                ->orWhere('id', 'like', "%{$search}%");
             });
+        }
+
+        $equipos = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('Admin/Equipos/Index', [
             'equipos' => $equipos,
-            'success' => session('success'),
+            'filters' => [
+                'search' => $search,
+                'perPage' => $perPage,
+            ],
         ]);
     }
 
@@ -70,7 +79,7 @@ class EquipoController extends Controller
 
         Equipo::create($validated);
 
-        return redirect()->route('equipos.index')->with('success', 'Equipo creado correctamente.');
+        return redirect()->route('admin.equipos.index')->with('success', 'Equipo creado correctamente.');
     }
 
     public function edit(Equipo $equipo)
@@ -121,14 +130,14 @@ class EquipoController extends Controller
 
         $equipo->update($validated);
 
-        return redirect()->route('equipos.index')->with('success', 'Equipo actualizado correctamente.');
+        return redirect()->route('admin.equipos.index')->with('success', 'Equipo actualizado correctamente.');
     }
 
     public function destroy(Equipo $equipo)
     {
         $equipo->delete();
 
-        return redirect()->route('equipos.index')->with('success', 'Equipo eliminado correctamente.');
+        return redirect()->route('admin.equipos.index')->with('success', 'Equipo eliminado correctamente.');
     }
 
     public function trashed()
@@ -146,6 +155,6 @@ class EquipoController extends Controller
         $equipo = Equipo::onlyTrashed()->findOrFail($id);
         $equipo->restore();
 
-        return redirect()->route('equipos.trashed')->with('success', 'Equipo restaurado correctamente');
+        return redirect()->route('admin.equipos.trashed')->with('success', 'Equipo restaurado correctamente');
     }
 }

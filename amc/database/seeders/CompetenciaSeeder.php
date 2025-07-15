@@ -12,23 +12,33 @@ class CompetenciaSeeder extends Seeder
     public function run(): void
     {
         Competencia::create([
-            'nombre' => 'Liga Profesional',
+            'nombre' => 'AMC ProLeague',
+            'logo' => 'images/competencias/AMC-PROLEAGUE.png', // Ruta del logo
         ]);
 
         Competencia::create([
-            'nombre' => 'Primera División',
+            'nombre' => 'Liga Elite',
+            'logo' => 'images/competencias/AMC-ELITE.png', // Ruta del logo
         ]);
 
         Competencia::create([
-            'nombre' => 'Segunda División',
+            'nombre' => 'Liga Ascenso',
+            'logo' => 'images/competencias/AMC-ASCENSO.png', // Ruta del logo
         ]);
 
         Competencia::create([
-            'nombre' => 'Tercera División',
+            'nombre' => 'Liga Anfa',
+            'logo' => 'images/competencias/AMC-ANFA.png', // Ruta del logo
+        ]);
+
+        Competencia::create([
+            'nombre' => 'Copa Chile AMC',
+            'logo' => 'images/competencias/AMC-COPACHILE.png', // Ruta del logo
         ]);
 
         Competencia::create([
             'nombre' => 'Relampago',
+            'logo' => 'images/competencias/AMC-RELAMPAGO.png', // Ruta del logo
         ]);
     }
 }

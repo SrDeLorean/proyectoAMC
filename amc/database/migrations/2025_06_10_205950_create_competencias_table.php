@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('competencias', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
+            $table->string('logo')->nullable(); // Ruta por defecto
             $table->timestamps();
             $table->softDeletes(); // para soft delete
         });

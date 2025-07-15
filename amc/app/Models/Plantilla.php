@@ -12,6 +12,7 @@ class Plantilla extends Model
     protected $fillable = [
         'id_equipo',
         'id_jugador',
+        'rol',
         'posicion',
         'numero',
     ];

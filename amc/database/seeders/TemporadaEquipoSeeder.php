@@ -16,7 +16,7 @@ class TemporadaEquipoSeeder extends Seeder
     {
         // Buscar la TemporadaCompetencia de "Primera División"
         $temporadaCompetencia = TemporadaCompetencia::whereHas('competencia', function ($query) {
-            $query->where('nombre', 'Primera División');
+            $query->where('nombre', 'AMC ProLeague');
         })->first();
 
         if (!$temporadaCompetencia) {

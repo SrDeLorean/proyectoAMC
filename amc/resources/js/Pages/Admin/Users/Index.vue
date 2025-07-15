@@ -1,31 +1,19 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import Swal from 'sweetalert2'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import BaseTable from '@/Components/Table/DataTable.vue'
-import ActionButtons from '@/Components/ActionButtons.vue'  // importa el componente
+import ActionButtons from '@/Components/ActionButtons.vue'
 
 const props = defineProps({
-  users: Array,
+  users: Object,         // paginación: data, links, meta
+  filters: Object,       // { search, perPage }
   success: String,
+  trashed: Boolean,
 })
 
-const localSuccess = ref(props.success)
-
-watch(
-  () => props.success,
-  (newVal) => {
-    localSuccess.value = newVal
-
-    if (newVal) {
-      setTimeout(() => {
-        localSuccess.value = ''
-      }, 3000)
-    }
-  }
-)
-
+// Columnas
 const columns = [
   { label: 'ID', key: 'id' },
   { label: 'ID EA', key: 'id_ea' },
@@ -35,34 +23,44 @@ const columns = [
   { label: 'Rol', key: 'role' },
 ]
 
-const actions = [
-  {
-    label: 'Editar',
-    class: 'text-blue-400 hover:text-blue-600 transition',
-    actionName: 'edit',
-  },
-  {
-    label: 'Eliminar',
-    class: 'text-red-500 hover:text-red-700 transition',
-    actionName: 'delete',
-  },
-]
+// Acciones
+const actions = computed(() => {
+  return props.trashed
+    ? [{ label: 'Restaurar', actionName: 'restore' }]
+    : [
+        { label: 'Editar', actionName: 'edit' },
+        { label: 'Eliminar', actionName: 'delete' },
+      ]
+})
 
-// Aquí defines los botones que quieres mostrar con el nuevo componente
-const buttons = [
-  {
-    label: '+ Crear Usuario',
-    href: '/admin/usuarios/create',
-    colorClass: 'bg-red-600 hover:bg-red-700',
-  },
-  {
-    label: '🗑️ Usuarios eliminados',
-    href: '/admin/usuarios/trashed',
-    colorClass: 'bg-gray-700 hover:bg-gray-800',
-    title: 'Usuarios eliminados',
-  },
-]
+// Botones superiores
+const buttons = computed(() => {
+  return props.trashed
+    ? [{ label: '← Volver a activos', href: '/admin/usuarios', colorClass: 'bg-gray-700 hover:bg-gray-800' }]
+    : [
+        { label: '+ Crear Usuario', href: '/admin/usuarios/create', colorClass: 'bg-red-600 hover:bg-red-700' },
+        { label: '🗑️ Usuarios eliminados', href: '/admin/usuarios/trashed', colorClass: 'bg-gray-700 hover:bg-gray-800' },
+      ]
+})
 
+// Filtros reactivos
+const search = ref(props.filters?.search || '')
+const perPage = ref(props.filters?.perPage || 10)
+
+// Búsqueda y paginación (debounced)
+let timeout = null
+watch([search, perPage], ([newSearch, newPerPage]) => {
+  clearTimeout(timeout)
+  timeout = setTimeout(() => {
+    router.get(
+      '/admin/usuarios',
+      { search: newSearch, perPage: newPerPage },
+      { preserveState: true, replace: true }
+    )
+  }, 300)
+})
+
+// Acción de tabla
 function onTableAction({ actionName, row }) {
   if (actionName === 'edit') {
     router.get(`/admin/usuarios/${row.id}/edit`)
@@ -81,36 +79,54 @@ function onTableAction({ actionName, row }) {
         router.delete(`/admin/usuarios/${row.id}`)
       }
     })
+  } else if (actionName === 'restore') {
+    Swal.fire({
+      title: `¿Restaurar a ${row.name}?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#22c55e',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, restaurar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        router.post(`/admin/usuarios/${row.id}/restore`)
+      }
+    })
   }
 }
 </script>
 
 <template>
   <AdminLayout>
-    <template #title>Lista de usuarios</template>
+    <template #title>Usuarios</template>
 
     <div class="p-6">
-      <!-- Mensaje éxito -->
+      <!-- Mensaje de éxito -->
       <div
-        v-if="localSuccess"
+        v-if="success"
         class="mb-4 p-3 bg-green-600 text-white rounded shadow transition-opacity duration-500"
       >
-        {{ localSuccess }}
+        {{ success }}
       </div>
 
-      <div
-        class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4"
-      >
-        <h1 class="text-2xl font-bold text-white">Lista de usuarios</h1>
-
-        <!-- Aquí usas el componente ActionButtons -->
+      <!-- Título y botones -->
+      <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+        <h1 class="text-2xl font-bold text-white">
+          {{ trashed ? 'Usuarios eliminados' : 'Lista de usuarios' }}
+        </h1>
         <ActionButtons :buttons="buttons" />
       </div>
 
+      <!-- Tabla -->
       <BaseTable
         :columns="columns"
-        :rows="users"
+        :rows="users.data"
+        :meta="users.meta"
+        :links="users.links"
         :actions="actions"
+        v-model:filterText="search"
+        v-model:perPage="perPage"
         @action="onTableAction"
       />
     </div>

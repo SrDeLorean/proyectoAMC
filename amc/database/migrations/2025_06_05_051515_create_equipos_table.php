@@ -17,7 +17,7 @@ return new class extends Migration
             $table->text('descripcion')->nullable();
             $table->string('color_primario')->nullable();
             $table->string('color_secundario')->nullable();
-            $table->string('logo')->nullable();
+            $table->string('logo')->default('images/equipos/default-equipo.png');
             $table->foreignId('id_formacion')->nullable()->constrained('formaciones')->nullOnDelete();
             $table->string('instagram')->nullable();
             $table->string('twitch')->nullable();

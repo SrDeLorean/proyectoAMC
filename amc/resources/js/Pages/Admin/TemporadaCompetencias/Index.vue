@@ -7,17 +7,37 @@ import BaseTable from '@/Components/Table/DataTable.vue'
 import ActionButtons from '@/Components/ActionButtons.vue'
 
 const props = defineProps({
-  temporadaCompetencias: Object,
+  temporadaCompetencias: Object,  // paginada
+  filters: Object,                // { search, perPage }
   success: String,
   trashed: Boolean,
 })
 
+// Local reactive para el mensaje success
 const localSuccess = ref(props.success)
 watch(() => props.success, val => {
   localSuccess.value = val
   if (val) setTimeout(() => (localSuccess.value = ''), 3000)
 })
 
+// Reactivos para filtros
+const search = ref(props.filters?.search || '')
+const perPage = ref(props.filters?.perPage || 15)
+
+// Debounce para evitar peticiones continuas
+let timeout = null
+watch([search, perPage], ([newSearch, newPerPage]) => {
+  clearTimeout(timeout)
+  timeout = setTimeout(() => {
+    router.get(
+      '/admin/temporada-competencias',
+      { search: newSearch, perPage: newPerPage },
+      { preserveState: true, replace: true }
+    )
+  }, 300)
+})
+
+// Columnas base
 const baseColumns = [
   { label: 'ID', key: 'id' },
   { label: 'Nombre', key: 'nombre' },
@@ -27,12 +47,14 @@ const baseColumns = [
   { label: 'Fecha Término', key: 'fecha_termino' },
 ]
 
+// Si mostramos eliminados, agregamos columna extra
 const columns = computed(() =>
   props.trashed
     ? [...baseColumns, { label: 'Eliminado el', key: 'deleted_at' }]
     : baseColumns
 )
 
+// Acciones según trashed o no
 const actions = computed(() =>
   props.trashed
     ? [
@@ -61,6 +83,7 @@ const actions = computed(() =>
       ]
 )
 
+// Botones arriba, según trashed
 const buttons = computed(() =>
   props.trashed
     ? [
@@ -84,6 +107,7 @@ const buttons = computed(() =>
       ]
 )
 
+// Manejo de acciones
 function onTableAction({ actionName, row }) {
   if (actionName === 'edit') {
     router.get(`/admin/temporada-competencias/${row.id}/edit`)
@@ -132,7 +156,9 @@ function onTableAction({ actionName, row }) {
         {{ localSuccess }}
       </div>
 
-      <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div
+        class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6"
+      >
         <h1 class="text-2xl font-bold text-white">
           {{ trashed ? 'Temporada Competencias Eliminadas' : 'Temporada Competencias' }}
         </h1>
@@ -143,7 +169,11 @@ function onTableAction({ actionName, row }) {
       <BaseTable
         :columns="columns"
         :rows="temporadaCompetencias.data"
+        :meta="temporadaCompetencias.meta"
+        :links="temporadaCompetencias.links"
         :actions="actions"
+        v-model:filterText="search"
+        v-model:perPage="perPage"
         @action="onTableAction"
       />
     </div>

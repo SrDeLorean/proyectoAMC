@@ -14,15 +14,39 @@ use App\Models\TemporadaEquipo;
 
 class TemporadaCompetenciaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $temporadaCompetencias = TemporadaCompetencia::with(['temporada', 'competencia'])->paginate(15);
+        $search = $request->input('search', '');
+        $perPage = $request->input('perPage', 15);
+
+        $query = TemporadaCompetencia::with(['temporada', 'competencia']);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nombre', 'like', "%{$search}%")
+                ->orWhereHas('temporada', function ($q2) use ($search) {
+                    $q2->where('nombre', 'like', "%{$search}%");
+                })
+                ->orWhereHas('competencia', function ($q3) use ($search) {
+                    $q3->where('nombre', 'like', "%{$search}%");
+                })
+                ->orWhere('fecha_inicio', 'like', "%{$search}%")
+                ->orWhere('fecha_termino', 'like', "%{$search}%");
+            });
+        }
+
+        $temporadaCompetencias = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('Admin/TemporadaCompetencias/Index', [
             'temporadaCompetencias' => $temporadaCompetencias,
+            'filters' => [
+                'search' => $search,
+                'perPage' => $perPage,
+            ],
             'success' => session('success'),
         ]);
     }
+
 
     public function show(TemporadaCompetencia $temporadaCompetencia)
     {
