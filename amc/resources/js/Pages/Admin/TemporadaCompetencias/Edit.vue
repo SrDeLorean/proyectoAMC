@@ -13,10 +13,16 @@ const props = defineProps({
 const temporadaOptions = props.temporadas.map(t => ({ label: t.nombre, value: t.id }))
 const competenciaOptions = props.competencias.map(c => ({ label: c.nombre, value: c.id }))
 
+const formatoOptions = [
+  { label: 'Liga', value: 'liga' },
+  { label: 'Copa', value: 'copa' },
+]
+
 const initialData = {
   nombre: props.temporadaCompetencia.nombre ?? '',
   id_temporada: props.temporadaCompetencia.id_temporada ?? '',
   id_competencia: props.temporadaCompetencia.id_competencia ?? '',
+  formato: props.temporadaCompetencia.formato ?? '',      // <-- agregado
   fecha_inicio: props.temporadaCompetencia.fecha_inicio ?? '',
   fecha_termino: props.temporadaCompetencia.fecha_termino ?? '',
 }
@@ -43,6 +49,13 @@ const fields = [
     label: 'Competencia',
     type: 'select',
     options: competenciaOptions,
+    required: true,
+  },
+  {
+    name: 'formato',        // <-- nuevo campo
+    label: 'Formato',
+    type: 'select',
+    options: formatoOptions,
     required: true,
   },
   {

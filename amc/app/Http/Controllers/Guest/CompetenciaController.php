@@ -91,8 +91,6 @@ class CompetenciaController extends Controller
                 'fecha' => $partido->fecha,
                 'hora' => $partido->hora,
                 'jornada' => $partido->jornada,
-                'goles_local' => $partido->goles_local,
-                'goles_visitante' => $partido->goles_visitante,
                 'equipoLocal' => $partido->equipoLocal ? [
                     'id' => $partido->equipoLocal->id,
                     'nombre' => $partido->equipoLocal->nombre,

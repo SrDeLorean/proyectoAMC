@@ -79,6 +79,7 @@ class TemporadaCompetenciaController extends Controller
             'nombre' => 'required|string|max:255',
             'id_temporada' => 'required|exists:temporadas,id',
             'id_competencia' => 'required|exists:competencias,id',
+            'formato' => 'nullable|string|in:liga,copa', // Formato opcional
             'fecha_inicio' => 'nullable|date',
             'fecha_termino' => 'nullable|date|after_or_equal:fecha_inicio',
         ]);
@@ -86,7 +87,7 @@ class TemporadaCompetenciaController extends Controller
         TemporadaCompetencia::create($validated);
 
         return redirect()
-            ->route('temporada-competencias.index')
+            ->route('admin.temporada-competencias.index')
             ->with('success', 'TemporadaCompetencia creada correctamente.');
     }
 
@@ -101,6 +102,7 @@ class TemporadaCompetenciaController extends Controller
                 'nombre' => $temporadaCompetencia->nombre,
                 'id_temporada' => $temporadaCompetencia->id_temporada,
                 'id_competencia' => $temporadaCompetencia->id_competencia,
+                'formato' => $temporadaCompetencia->formato,
                 'fecha_inicio' => $temporadaCompetencia->fecha_inicio?->format('Y-m-d'),
                 'fecha_termino' => $temporadaCompetencia->fecha_termino?->format('Y-m-d'),
             ],
@@ -115,6 +117,7 @@ class TemporadaCompetenciaController extends Controller
             'nombre' => 'required|string|max:255',
             'id_temporada' => 'required|exists:temporadas,id',
             'id_competencia' => 'required|exists:competencias,id',
+            'formato' => 'nullable|string|in:liga,copa', // Formato opcional
             'fecha_inicio' => 'nullable|date',
             'fecha_termino' => 'nullable|date|after_or_equal:fecha_inicio',
         ]);
@@ -123,7 +126,7 @@ class TemporadaCompetenciaController extends Controller
 
         Session::flash('success', 'TemporadaCompetencia actualizada correctamente.');
 
-        return redirect()->route('temporada-competencias.index');
+        return redirect()->route('admin.temporada-competencias.index');
     }
 
     public function destroy(TemporadaCompetencia $temporadaCompetencia)
@@ -131,7 +134,7 @@ class TemporadaCompetenciaController extends Controller
         $temporadaCompetencia->delete();
 
         return redirect()
-            ->route('temporada-competencias.index')
+            ->route('admin.temporada-competencias.index')
             ->with('success', 'TemporadaCompetencia eliminada correctamente.');
     }
 
@@ -151,7 +154,7 @@ class TemporadaCompetenciaController extends Controller
         $temporadaCompetencia->restore();
 
         return redirect()
-            ->route('temporada-competencias.trashed')
+            ->route('admin.temporada-competencias.trashed')
             ->with('success', 'TemporadaCompetencia restaurada correctamente.');
     }
 

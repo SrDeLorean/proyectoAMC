@@ -77,6 +77,10 @@ Route::get('calendarios/trashed', [CalendarioController::class, 'trashed'])->nam
 Route::post('calendarios/restore/{id}', [CalendarioController::class, 'restore'])->name('calendarios.restore');
 Route::post('/calendario/generar/{id}', [CalendarioController::class, 'generateByTemporadaCompetencia'])->name('calendario.generar');
 Route::post('/calendario/generar-solo-ida/{id}', [CalendarioController::class, 'generateSoloIdaByTemporadaCompetencia'])->name('calendario.generar-ida');
+Route::prefix('calendarios')->name('calendarios.')->controller(CalendarioController::class)->group(function () {
+    Route::post('{id}/generar-copa-directa', 'generateCopaDirecta')->name('generar-copa-directa');
+    Route::post('{id}/generar-copa-con-ventaja', 'generateCopaConVentaja')->name('generar-copa-con-ventaja');
+});
 
 // Temporada Equipos
 Route::resource('temporada-equipos', TemporadaEquipoController::class)->except(['show']);

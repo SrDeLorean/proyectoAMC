@@ -16,8 +16,9 @@ return new class extends Migration
             $table->string('nombre');
             $table->foreignId('id_temporada')->constrained('temporadas')->onDelete('cascade');
             $table->foreignId('id_competencia')->constrained('competencias')->onDelete('cascade');
+            $table->string('formato')->nullable(); // 'liga' o 'copa'
             $table->date('fecha_inicio');
-            $table->date('fecha_termino');
+            $table->date('fecha_termino')->nullable();
             $table->timestamps();
             $table->softDeletes(); // para soft delete
         });

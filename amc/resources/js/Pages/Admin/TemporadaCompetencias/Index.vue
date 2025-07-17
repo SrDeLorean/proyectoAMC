@@ -43,6 +43,7 @@ const baseColumns = [
   { label: 'Nombre', key: 'nombre' },
   { label: 'Temporada', key: 'temporada.nombre' },
   { label: 'Competencia', key: 'competencia.nombre' },
+  { label: 'Formato', key: 'formato' },
   { label: 'Fecha Inicio', key: 'fecha_inicio' },
   { label: 'Fecha Término', key: 'fecha_termino' },
 ]

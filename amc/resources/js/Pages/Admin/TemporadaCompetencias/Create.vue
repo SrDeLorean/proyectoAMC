@@ -12,6 +12,7 @@ const form = useForm({
   nombre: '',
   id_temporada: '',
   id_competencia: '',
+  formato: '',          // <-- Agregado formato aquí
   fecha_inicio: '',
   fecha_termino: '',
 })
@@ -19,6 +20,11 @@ const form = useForm({
 // Opciones para selects, para pasarlas en campos custom
 const temporadaOptions = props.temporadas.map(t => ({ label: t.nombre, value: t.id }))
 const competenciaOptions = props.competencias.map(c => ({ label: c.nombre, value: c.id }))
+
+const formatoOptions = [
+  { label: 'Liga', value: 'liga' },
+  { label: 'Copa', value: 'copa' },
+]
 
 const fields = [
   { name: 'nombre', label: 'Nombre', type: 'text', required: true },
@@ -30,6 +36,10 @@ const fields = [
     name: 'id_competencia', label: 'Competencia', type: 'select', required: true,
     options: competenciaOptions
   },
+  {
+    name: 'formato', label: 'Formato', type: 'select', required: true,
+    options: formatoOptions
+  },
   { name: 'fecha_inicio', label: 'Fecha Inicio', type: 'date' },
   { name: 'fecha_termino', label: 'Fecha Término', type: 'date' },
 ]
@@ -40,6 +50,7 @@ const submit = () => {
   })
 }
 </script>
+
 
 <template>
   <AdminLayout>

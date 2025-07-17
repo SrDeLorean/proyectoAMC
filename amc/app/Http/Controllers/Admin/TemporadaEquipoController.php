@@ -40,7 +40,7 @@ class TemporadaEquipoController extends Controller
         TemporadaEquipo::create($validated);
 
         return redirect()
-            ->route('temporada-competencias.show', $validated['id_temporadacompetencia'])
+            ->route('admin.temporada-competencias.show', $validated['id_temporadacompetencia'])
             ->with('success', 'Equipo afiliado correctamente.');
     }
 
@@ -72,7 +72,7 @@ class TemporadaEquipoController extends Controller
         Session::flash('success', 'TemporadaEquipo actualizado correctamente.');
 
         return redirect()
-            ->route('temporada-competencias.show', $validated['id_temporadacompetencia'])
+            ->route('admin.temporada-competencias.show', $validated['id_temporadacompetencia'])
             ->with('success', 'Equipo afiliado correctamente.');
     }
 
@@ -81,7 +81,7 @@ class TemporadaEquipoController extends Controller
         $temporadaEquipo->delete();
 
         return redirect()
-            ->route('temporada-competencias.show', $temporadaEquipo->id_temporadacompetencia)
+            ->route('admin.temporada-competencias.show', $temporadaEquipo->id_temporadacompetencia)
             ->with('success', 'TemporadaEquipo eliminado correctamente.');
     }
 }

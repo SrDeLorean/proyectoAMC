@@ -14,6 +14,7 @@ class TemporadaCompetencia extends Model
         'nombre',
         'id_temporada',
         'id_competencia',
+        'formato', // 'liga' o 'copa'
         'fecha_inicio',
         'fecha_termino',
     ];

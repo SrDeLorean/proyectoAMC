@@ -1,13 +1,18 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import AppLayout from '@/Layouts/GuestLayout.vue'
 import { router } from '@inertiajs/vue3'
+import { route } from 'ziggy-js'
 
 import TabInicio from './Partials/Inicio.vue'
-import TabClasificacion from './Partials/Clasificacion.vue'
 import TabMaximos from './Partials/Maximos.vue'
 import TabTotw from './Partials/TOTW.vue'
-import TabCalendario from './Partials/Calendario.vue'
+
+import ClasificacionLiga from './Partials/ClasificacionLiga.vue'
+import ClasificacionCopa from './Partials/ClasificacionCopa.vue'
+
+import CalendarioLiga from './Partials/CalendarioLiga.vue'
+import CalendarioCopa from './Partials/CalendarioCopa.vue'
 
 const props = defineProps({
   competencia: Object,
@@ -30,23 +35,22 @@ watch(temporadaSelected, (newVal) => {
     temporada_id: newVal,
   })
 })
+
+const esLiga = computed(() => props.temporadaCompetencia?.formato === 'liga')
+const esCopa = computed(() => props.temporadaCompetencia?.formato === 'copa')
 </script>
 
 <template>
   <AppLayout>
     <template #header>
-      <h2
-        class="font-semibold text-xl sm:text-2xl text-gray-800 dark:text-white leading-tight"
-      >
+      <h2 class="font-semibold text-xl sm:text-2xl text-gray-800 dark:text-white leading-tight">
         {{ competencia.nombre }}
       </h2>
     </template>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-10 space-y-10">
-      <!-- Tarjeta superior -->
-      <div
-        class="flex flex-col md:flex-row items-center bg-gray-900 rounded-3xl shadow-2xl border-2 border-red-600 p-6 sm:p-8 gap-6 sm:gap-10"
-      >
+      <!-- Selección temporada + info -->
+      <div class="flex flex-col md:flex-row items-center bg-gray-900 rounded-3xl shadow-2xl border-2 border-red-600 p-6 sm:p-8 gap-6 sm:gap-10">
         <div class="flex-shrink-0">
           <img
             :src="`/${competencia.logo}`"
@@ -56,21 +60,15 @@ watch(temporadaSelected, (newVal) => {
           />
         </div>
 
-        <div
-          class="flex-1 flex flex-col gap-6 sm:gap-8 w-full max-w-md"
-        >
+        <div class="flex-1 flex flex-col gap-6 sm:gap-8 w-full max-w-md">
           <div>
-            <label
-              for="temporada-select"
-              class="block mb-2 sm:mb-3 text-base sm:text-lg font-semibold text-gray-300 tracking-wide"
-            >
+            <label for="temporada-select" class="block mb-2 sm:mb-3 text-base sm:text-lg font-semibold text-gray-300 tracking-wide">
               Selecciona temporada
             </label>
             <select
               id="temporada-select"
               v-model="temporadaSelected"
-              class="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2 sm:px-5 sm:py-3 text-white
-                     focus:outline-none focus:ring-4 focus:ring-red-600 transition shadow-md"
+              class="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2 sm:px-5 sm:py-3 text-white focus:outline-none focus:ring-4 focus:ring-red-600 transition shadow-md"
             >
               <option
                 v-for="tempComp in temporadasCompetencias"
@@ -82,13 +80,8 @@ watch(temporadaSelected, (newVal) => {
             </select>
           </div>
 
-          <div
-            v-if="temporadaCompetencia"
-            class="bg-gray-800 rounded-xl p-4 sm:p-5 border border-red-600 shadow-inner text-gray-300"
-          >
-            <h3
-              class="text-xl sm:text-2xl font-bold text-red-500 mb-2 tracking-wide"
-            >
+          <div v-if="temporadaCompetencia" class="bg-gray-800 rounded-xl p-4 sm:p-5 border border-red-600 shadow-inner text-gray-300">
+            <h3 class="text-xl sm:text-2xl font-bold text-red-500 mb-2 tracking-wide">
               {{ temporadaCompetencia.nombre }}
             </h3>
             <p class="leading-relaxed text-sm sm:text-lg">
@@ -102,11 +95,8 @@ watch(temporadaSelected, (newVal) => {
         </div>
       </div>
 
-      <!-- Navegación de pestañas tipo pills -->
-      <nav
-        class="flex flex-wrap justify-center gap-3 sm:gap-6"
-        aria-label="Tabs"
-      >
+      <!-- Tabs de navegación -->
+      <nav class="flex flex-wrap justify-center gap-3 sm:gap-6" aria-label="Tabs">
         <button
           v-for="tab in [
             { name: 'inicio', label: 'Inicio' },
@@ -128,19 +118,40 @@ watch(temporadaSelected, (newVal) => {
         </button>
       </nav>
 
-      <!-- Contenido de la pestaña -->
+      <!-- Contenido según pestaña -->
       <section class="mt-8 min-h-[400px]">
         <TabInicio v-show="activeTab === 'inicio'" :equipos="equipos" />
-        <TabClasificacion v-show="activeTab === 'clasificacion'" :tabla="clasificacion" />
+
+        <ClasificacionLiga
+          v-if="activeTab === 'clasificacion' && esLiga"
+          :tabla="clasificacion"
+        />
+        <ClasificacionCopa
+          v-if="activeTab === 'clasificacion' && esCopa"
+          :tabla="clasificacion"
+        />
+
         <TabMaximos v-show="activeTab === 'maximos'" :maximos="maximos" />
         <TabTotw v-show="activeTab === 'totw'" :totw="totw" />
-        <TabCalendario
-          v-show="activeTab === 'calendario'"
+
+        <CalendarioLiga
+          v-if="activeTab === 'calendario' && esLiga"
           :calendario="calendario"
           :jornadasDisponibles="jornadasDisponibles"
           :jornadaSeleccionada="jornadaSeleccionada"
           :competenciaId="competencia.id"
           :temporadaCompetenciaId="temporadaCompetencia.id"
+          @update:jornadaSeleccionada="$emit('update:jornadaSeleccionada', $event)"
+        />
+        <CalendarioCopa
+          v-if="activeTab === 'calendario' && esCopa"
+          :calendario="calendario"
+          :equipos="equipos"
+          :jornadasDisponibles="jornadasDisponibles"
+          :jornadaSeleccionada="jornadaSeleccionada"
+          :competenciaId="competencia.id"
+          :temporadaCompetenciaId="temporadaCompetencia.id"
+          @update:jornadaSeleccionada="$emit('update:jornadaSeleccionada', $event)"
         />
       </section>
     </div>
