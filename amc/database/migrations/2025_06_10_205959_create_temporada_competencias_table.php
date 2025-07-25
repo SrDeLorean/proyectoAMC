@@ -19,6 +19,12 @@ return new class extends Migration
             $table->string('formato')->nullable(); // 'liga' o 'copa'
             $table->date('fecha_inicio');
             $table->date('fecha_termino')->nullable();
+
+            // Campos para controlar fichajes
+            $table->boolean('fichajes_abiertos')->default(true);
+            $table->timestamp('fichajes_inicio')->nullable();
+            $table->timestamp('fichajes_fin')->nullable();
+
             $table->timestamps();
             $table->softDeletes(); // para soft delete
         });

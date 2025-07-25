@@ -210,8 +210,8 @@ class CalendarioController extends Controller
     {
         $validated = $request->validate([
             'id_temporadacompetencia' => 'required|exists:temporada_competencias,id',
-            'equipo_local_id' => 'required|exists:equipos,id|different:equipo_visitante_id',
-            'equipo_visitante_id' => 'required|exists:equipos,id',
+            'id_equipo_local' => 'required|exists:equipos,id|different:id_equipo_visitante',
+            'id_equipo_visitante' => 'required|exists:equipos,id',
             'fecha' => 'nullable|date',
             'jornada' => 'nullable|integer|min:1',
         ]);
@@ -229,8 +229,8 @@ class CalendarioController extends Controller
             'calendario' => [
                 'id' => $calendario->id,
                 'id_temporadacompetencia' => $calendario->id_temporadacompetencia,
-                'equipo_local_id' => $calendario->equipo_local_id,
-                'equipo_visitante_id' => $calendario->equipo_visitante_id,
+                'id_equipo_local' => $calendario->id_equipo_local,
+                'id_equipo_visitante' => $calendario->id_equipo_visitante,
                 'fecha' => $calendario->fecha?->format('Y-m-d\TH:i'),
                 'jornada' => $calendario->jornada,
             ],
@@ -254,12 +254,12 @@ class CalendarioController extends Controller
 
             $local = TemporadaEquipo::where([
                 ['id_temporadacompetencia', $calendario->id_temporadacompetencia],
-                ['id_equipo', $calendario->equipo_local_id],
+                ['id_equipo', $calendario->id_equipo_local],
             ])->first();
 
             $visitante = TemporadaEquipo::where([
                 ['id_temporadacompetencia', $calendario->id_temporadacompetencia],
-                ['id_equipo', $calendario->equipo_visitante_id],
+                ['id_equipo', $calendario->id_equipo_visitante],
             ])->first();
 
             if ($golesAntesLocal !== null && $golesAntesVisitante !== null) {
@@ -274,8 +274,8 @@ class CalendarioController extends Controller
 
         $validated = $request->validate([
             'id_temporadacompetencia' => 'required|exists:temporada_competencias,id',
-            'equipo_local_id' => 'required|exists:equipos,id|different:equipo_visitante_id',
-            'equipo_visitante_id' => 'required|exists:equipos,id',
+            'id_equipo_local' => 'required|exists:equipos,id|different:id_equipo_visitante',
+            'id_equipo_visitante' => 'required|exists:equipos,id',
             'fecha' => 'nullable|date',
             'jornada' => 'nullable|integer|min:1',
         ]);

@@ -52,8 +52,8 @@ class CalendarioSoloIdaSeeder extends Seeder
                 if ($local !== null && $visitante !== null) {
                     $partidos[] = [
                         'id_temporadacompetencia' => $this->id,
-                        'equipo_local_id' => $local,
-                        'equipo_visitante_id' => $visitante,
+                        'id_equipo_local' => $local,
+                        'id_equipo_visitante' => $visitante,
                         'jornada' => $jornada,
                     ];
                 }

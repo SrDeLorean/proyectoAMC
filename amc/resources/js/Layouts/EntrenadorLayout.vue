@@ -1,40 +1,61 @@
 <script setup>
-import { ref } from 'vue';
-import AppLayout from '@/Layouts/AppLayout.vue';
-
-const showingNavigationDropdown = ref(false);
+import AppLayout from '@/Layouts/AppLayout.vue'
+import NavLink from '@/Components/NavLink.vue'
 </script>
 
 <template>
   <AppLayout>
-    <!-- Aquí definimos el slot "navigationLinks" que usaremos dentro de AppLayout para poner las NavLinks -->
-    <template #navigationLinks>
-      <NavLink
-        :href="route('dashboard')"
-        :active="route().current('dashboard')"
-      >
-        Dashboard
-      </NavLink>
-      <!-- Agrega más enlaces exclusivos para entrenador -->
-      <NavLink
-        :href="route('entrenador.equipos.index')"
-        :active="route().current('entrenador.equipos.index')"
-      >
-        Mis Equipos
-      </NavLink>
-      <NavLink
-        :href="route('entrenador.jugadores.index')"
-        :active="route().current('entrenador.jugadores.index')"
-      >
-        Mis Jugadores
-      </NavLink>
+    <!-- Slot para navegación simple -->
+    <template #nav>
+
+        <nav class="flex space-x-4 bg-gray-900 p-3 rounded-md">
+        <NavLink
+            :href="route('entrenador.dashboard')"
+            :active="route().current('entrenador.dashboard')"
+            class="text-white hover:text-red-500"
+            active-class="text-red-500 underline"
+        >
+            Dashboard
+        </NavLink>
+
+        <NavLink
+            :href="route('entrenador.equipos.index')"
+            :active="route().current('entrenador.equipos.index') || route().current('entrenador.equipos.*')"
+            class="text-white hover:text-red-500"
+            active-class="text-red-500 underline"
+        >
+            Mis Equipos
+        </NavLink>
+
+        <NavLink
+            :href="route('entrenador.traspasos.index')"
+            :active="route().current('entrenador.traspasos.index') || route().current('entrenador.traspasos.*')"
+            class="text-white hover:text-red-500"
+            active-class="text-red-500 underline"
+        >
+            Traspasos
+        </NavLink>
+
+        <NavLink
+            :href="route('entrenador.plantillas.index')"
+            :active="route().current('entrenador.plantillas.index') || route().current('entrenador.plantillas.*')"
+            class="text-white hover:text-red-500"
+            active-class="text-red-500 underline"
+        >
+            Plantillas
+        </NavLink>
+        </nav>
+
     </template>
 
-    <!-- Slot header y contenido van normales -->
     <template #header>
-      <slot name="header" />
+      <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        Panel de Entrenador
+      </h2>
     </template>
 
-    <slot />
+    <div>
+      <slot />
+    </div>
   </AppLayout>
 </template>

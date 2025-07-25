@@ -33,10 +33,10 @@ const fases = computed(() => {
 
     agrupado[nombreFase].push({
       id: partido.id,
-      local: getEquipoInfo(partido.equipo_local_id).nombre,
-      visitante: getEquipoInfo(partido.equipo_visitante_id).nombre,
-      logoLocal: getEquipoInfo(partido.equipo_local_id).logo,
-      logoVisitante: getEquipoInfo(partido.equipo_visitante_id).logo,
+      local: getEquipoInfo(partido.id_equipo_local).nombre,
+      visitante: getEquipoInfo(partido.id_equipo_visitante).nombre,
+      logoLocal: getEquipoInfo(partido.id_equipo_local).logo,
+      logoVisitante: getEquipoInfo(partido.id_equipo_visitante).logo,
       golesLocal: partido.goles_equipo_local,
       golesVisitante: partido.goles_equipo_visitante,
     })

@@ -1,9 +1,9 @@
 <script setup>
-import AppLayout from '@/Layouts/JugadorLayout.vue';
+import JugadorLayout from '@/Layouts/JugadorLayout.vue';
 </script>
 
 <template>
-  <AppLayout>
+  <JugadorLayout>
     <template #header>
       <h2 class="font-semibold text-xl text-gray-800 leading-tight">
         Dashboard Jugador
@@ -14,5 +14,5 @@ import AppLayout from '@/Layouts/JugadorLayout.vue';
       <!-- Contenido del dashboard jugador -->
       Bienvenido Jugador
     </div>
-  </AppLayout>
+  </JugadorLayout>
 </template>

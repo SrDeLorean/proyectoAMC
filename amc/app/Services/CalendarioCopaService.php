@@ -99,8 +99,8 @@ class CalendarioCopaService
 
                     Calendario::create([
                         'id_temporadacompetencia' => $id_temporadacompetencia,
-                        'equipo_local_id' => $local,
-                        'equipo_visitante_id' => $visitante,
+                        'id_equipo_local' => $local,
+                        'id_equipo_visitante' => $visitante,
                         'fecha' => $fechaActual->toDateString(),
                         'hora' => '23:00',
                         'jornada' => "{$nombreRonda} - Ida",
@@ -108,8 +108,8 @@ class CalendarioCopaService
 
                     Calendario::create([
                         'id_temporadacompetencia' => $id_temporadacompetencia,
-                        'equipo_local_id' => $visitante,
-                        'equipo_visitante_id' => $local,
+                        'id_equipo_local' => $visitante,
+                        'id_equipo_visitante' => $local,
                         'fecha' => $fechaActual->toDateString(),
                         'hora' => '23:30',
                         'jornada' => "{$nombreRonda} - Vuelta",
@@ -179,8 +179,8 @@ class CalendarioCopaService
 
                 Calendario::create([
                     'id_temporadacompetencia' => $id_temporadacompetencia,
-                    'equipo_local_id' => $local,
-                    'equipo_visitante_id' => $visitante,
+                    'id_equipo_local' => $local,
+                    'id_equipo_visitante' => $visitante,
                     'fecha' => $fechaActual->toDateString(),
                     'hora' => '23:00',
                     'jornada' => "$nombreFase - Ida",
@@ -188,8 +188,8 @@ class CalendarioCopaService
 
                 Calendario::create([
                     'id_temporadacompetencia' => $id_temporadacompetencia,
-                    'equipo_local_id' => $visitante,
-                    'equipo_visitante_id' => $local,
+                    'id_equipo_local' => $visitante,
+                    'id_equipo_visitante' => $local,
                     'fecha' => $fechaActual->toDateString(),
                     'hora' => '23:30',
                     'jornada' => "$nombreFase - Vuelta",
@@ -203,16 +203,16 @@ class CalendarioCopaService
             // Semifinal
             Calendario::create([
                 'id_temporadacompetencia' => $id_temporadacompetencia,
-                'equipo_local_id' => $equipoSemifinal,
-                'equipo_visitante_id' => $equipoPorDeterminarId,
+                'id_equipo_local' => $equipoSemifinal,
+                'id_equipo_visitante' => $equipoPorDeterminarId,
                 'fecha' => $fechaActual->toDateString(),
                 'hora' => '23:00',
                 'jornada' => "Semifinal - Ida",
             ]);
             Calendario::create([
                 'id_temporadacompetencia' => $id_temporadacompetencia,
-                'equipo_local_id' => $equipoPorDeterminarId,
-                'equipo_visitante_id' => $equipoSemifinal,
+                'id_equipo_local' => $equipoPorDeterminarId,
+                'id_equipo_visitante' => $equipoSemifinal,
                 'fecha' => $fechaActual->toDateString(),
                 'hora' => '23:30',
                 'jornada' => "Semifinal - Vuelta",
@@ -225,16 +225,16 @@ class CalendarioCopaService
             // Final
             Calendario::create([
                 'id_temporadacompetencia' => $id_temporadacompetencia,
-                'equipo_local_id' => $equipoFinal,
-                'equipo_visitante_id' => $equipoPorDeterminarId,
+                'id_equipo_local' => $equipoFinal,
+                'id_equipo_visitante' => $equipoPorDeterminarId,
                 'fecha' => $fechaActual->toDateString(),
                 'hora' => '23:00',
                 'jornada' => "Final - Ida",
             ]);
             Calendario::create([
                 'id_temporadacompetencia' => $id_temporadacompetencia,
-                'equipo_local_id' => $equipoPorDeterminarId,
-                'equipo_visitante_id' => $equipoFinal,
+                'id_equipo_local' => $equipoPorDeterminarId,
+                'id_equipo_visitante' => $equipoFinal,
                 'fecha' => $fechaActual->toDateString(),
                 'hora' => '23:30',
                 'jornada' => "Final - Vuelta",

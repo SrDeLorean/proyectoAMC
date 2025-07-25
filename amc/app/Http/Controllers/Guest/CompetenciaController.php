@@ -84,8 +84,8 @@ class CompetenciaController extends Controller
             return [
                 'id' => $partido->id,
                 'id_temporadacompetencia' => $partido->id_temporadacompetencia,
-                'equipo_local_id' => $partido->equipo_local_id,
-                'equipo_visitante_id' => $partido->equipo_visitante_id,
+                'id_equipo_local' => $partido->id_equipo_local,
+                'id_equipo_visitante' => $partido->id_equipo_visitante,
                 'goles_equipo_local' => $partido->goles_equipo_local,
                 'goles_equipo_visitante' => $partido->goles_equipo_visitante,
                 'fecha' => $partido->fecha,

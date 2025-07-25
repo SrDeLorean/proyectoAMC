@@ -86,10 +86,20 @@ function toggleMenu() {
                 :href="route('admin.plantillas.index')"
                 :active="route().current('admin.plantillas.index')"
                 v-if="user?.role === 'administrador'"
-                class="block text-white hover:text-red-500"
+                class="block text-white hover:text-red-500 mb-1"
                 active-class="bg-gray-900 text-red-500 rounded-md px-3 py-2"
               >
                 Plantillas
+              </NavLink>
+
+              <NavLink
+                :href="route('admin.traspasos.index')"
+                :active="route().current('admin.traspasos.index')"
+                v-if="user?.role === 'administrador'"
+                class="block text-white hover:text-red-500"
+                active-class="bg-gray-900 text-red-500 rounded-md px-3 py-2"
+              >
+                Traspasos
               </NavLink>
             </div>
 

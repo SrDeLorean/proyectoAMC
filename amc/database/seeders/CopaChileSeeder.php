@@ -66,6 +66,7 @@ class CopaChileSeeder extends Seeder
                 'nombre' => $nombreGrupo,
                 'id_temporada' => $temporada->id,
                 'id_competencia' => $competencia->id,
+                'formato' => 'liga',          // <-- Agregado aquí
                 'fecha_inicio' => '2025-07-07',
                 'fecha_termino' => '2025-07-31',
             ]);

@@ -43,8 +43,8 @@ class CalendarioService
                 if ($local !== null && $visitante !== null) {
                     $partidos[] = [
                         'id_temporadacompetencia' => $idTemporadaCompetencia,
-                        'equipo_local_id' => $local,
-                        'equipo_visitante_id' => $visitante,
+                        'id_equipo_local' => $local,
+                        'id_equipo_visitante' => $visitante,
                         'jornada' => $jornada,
                     ];
                 }
@@ -62,8 +62,8 @@ class CalendarioService
             foreach ($partidos as $p) {
                 $partidosVuelta[] = [
                     'id_temporadacompetencia' => $p['id_temporadacompetencia'],
-                    'equipo_local_id' => $p['equipo_visitante_id'],
-                    'equipo_visitante_id' => $p['equipo_local_id'],
+                    'id_equipo_local' => $p['id_equipo_visitante'],
+                    'id_equipo_visitante' => $p['id_equipo_local'],
                     'jornada' => $p['jornada'] + $jornadas,
                 ];
             }

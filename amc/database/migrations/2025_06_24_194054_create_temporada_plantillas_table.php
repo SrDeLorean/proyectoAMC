@@ -24,6 +24,8 @@ return new class extends Migration
             $table->string('rol');
             $table->string('posicion');
             $table->unsignedTinyInteger('numero');
+            $table->date('fecha_ingreso')->nullable(); // Fecha de ingreso a la plantilla
+            $table->date('fecha_salida')->nullable(); // Fecha de salida de la plantilla
 
             $table->timestamps();
             $table->softDeletes(); // para borrado lógico

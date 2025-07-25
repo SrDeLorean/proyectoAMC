@@ -27,6 +27,7 @@ return new class extends Migration
             $table->integer('diferencia_goles')->default(0);         // SG = GP - GC
 
             $table->timestamps();
+            $table->softDeletes(); // para borrado lógico
         });
     }
 

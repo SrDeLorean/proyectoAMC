@@ -11,15 +11,13 @@ class CreateEstadisticaEquiposTable extends Migration
         Schema::create('estadistica_equipos', function (Blueprint $table) {
             $table->id();
 
-            // Relación con el equipo (ajusta el nombre de la tabla si es diferente)
-            $table->foreignId('equipo_id')->constrained()->onDelete('cascade');
-            // Relación con la competencia o partido (ajusta según modelo)
-            $table->foreignId('calendario_id')->constrained()->onDelete('cascade');
-
+            $table->foreignId('id_equipo')->constrained('equipos')->onDelete('cascade');
+            $table->foreignId('id_calendario')->constrained('calendarios')->onDelete('cascade');
+            $table->foreignId('id_temporadaCompetencia')->constrained('temporada_competencias')->onDelete('cascade');
 
             // Estadísticas del equipo
             $table->unsignedTinyInteger('posesion')->nullable();                    // Porcentaje de posesión
-            $table->unsignedTinyInteger('regates_exito')->nullable();              // Porcentaje de regates exitosos
+            $table->unsignedTinyInteger('tasa_exito_regates')->nullable();         // Porcentaje de regates exitosos
             $table->unsignedTinyInteger('precision_tiros')->nullable();            // Porcentaje de precisión de tiros
             $table->unsignedTinyInteger('precision_pases')->nullable();            // Porcentaje de precisión de pases
 
@@ -28,20 +26,20 @@ class CreateEstadisticaEquiposTable extends Migration
             $table->float('goles_esperados')->nullable();                          // Goles esperados (xG)
             $table->unsignedSmallInteger('pases')->nullable();                     // Total pases
             $table->unsignedSmallInteger('entradas')->nullable();                  // Entradas realizadas
-            $table->unsignedSmallInteger('entradas_exito')->nullable();            // Entradas exitosas
+            $table->unsignedSmallInteger('entradas_con_exito')->nullable();        // Entradas exitosas
             $table->unsignedSmallInteger('recuperaciones')->nullable();            // Recuperaciones
             $table->unsignedTinyInteger('atajadas')->nullable();                   // Atajadas del portero
             $table->unsignedTinyInteger('faltas_cometidas')->nullable();           // Faltas cometidas
             $table->unsignedTinyInteger('fuera_de_juego')->nullable();             // Posiciones de fuera de juego
-            $table->unsignedTinyInteger('tiros_esquina')->nullable();              // Tiros de esquina
+            $table->unsignedTinyInteger('tiros_de_esquina')->nullable();           // Tiros de esquina
             $table->unsignedTinyInteger('tiros_libres')->nullable();               // Tiros libres
             $table->unsignedTinyInteger('penales')->nullable();                    // Penales
             $table->unsignedTinyInteger('tarjetas_amarillas')->nullable();         // Tarjetas amarillas
-            $table->boolean('procesado')->default(false); // Indica si la estadística ha sido procesada
+
+            $table->boolean('procesado')->default(false);                          // Indica si la estadística ha sido procesada
             $table->string('foto')->nullable();
 
             $table->timestamps();
-
             $table->softDeletes(); // Para borrado lógico
         });
     }

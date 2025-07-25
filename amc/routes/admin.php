@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\CalendarioController;
 use App\Http\Controllers\Admin\TemporadaEquipoController;
 use App\Http\Controllers\Admin\EquipoController; // <- ESTA ES LA NUEVA IMPORTACIÓN
 use App\Http\Controllers\Admin\EstadisticaEquipoController;
+use App\Http\Controllers\Admin\TraspasoController;
 
 // Dashboard
 Route::get('/dashboard', fn () => Inertia::render('Admin/Dashboard'))->name('dashboard');
@@ -101,3 +102,8 @@ Route::prefix('equipos')->name('equipos.')->group(function () {
 
 
 Route::post('/estadisticas/subir', [EstadisticaEquipoController::class, 'subirDesdeImagen'])->name('estadisticas.subir');
+
+
+Route::get('/traspasos', [TraspasoController::class, 'index'])->name('traspasos.index');
+Route::post('/traspasos/{id}/aprobar', [TraspasoController::class, 'aprobar'])->name('traspasos.aprobar');
+Route::post('/traspasos/{id}/cancelar', [TraspasoController::class, 'cancelar'])->name('traspasos.cancelar');

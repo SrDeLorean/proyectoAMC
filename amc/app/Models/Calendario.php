@@ -5,13 +5,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Calendario extends Model
 {
+
+    use SoftDeletes;
+
     protected $fillable = [
         'id_temporadacompetencia',
-        'equipo_local_id',
-        'equipo_visitante_id',
+        'id_equipo_local',
+        'id_equipo_visitante',
         'goles_equipo_local',
         'goles_equipo_visitante',
         'jornada',
@@ -26,11 +30,11 @@ class Calendario extends Model
 
     public function equipoLocal()
     {
-        return $this->belongsTo(Equipo::class, 'equipo_local_id');
+        return $this->belongsTo(Equipo::class, 'id_equipo_local');
     }
 
     public function equipoVisitante()
     {
-        return $this->belongsTo(Equipo::class, 'equipo_visitante_id');
+        return $this->belongsTo(Equipo::class, 'id_equipo_visitante');
     }
 }

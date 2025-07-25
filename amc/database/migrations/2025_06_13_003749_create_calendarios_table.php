@@ -11,14 +11,15 @@ class CreateCalendariosTable extends Migration
         Schema::create('calendarios', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_temporadacompetencia')->constrained('temporada_competencias')->onDelete('cascade');
-            $table->foreignId('equipo_local_id')->constrained('equipos')->onDelete('cascade');
-            $table->foreignId('equipo_visitante_id')->constrained('equipos')->onDelete('cascade');
+            $table->foreignId('id_equipo_local')->constrained('equipos')->onDelete('cascade');
+            $table->foreignId('id_equipo_visitante')->constrained('equipos')->onDelete('cascade');
             $table->integer('goles_equipo_local')->nullable();
             $table->integer('goles_equipo_visitante')->nullable();
             $table->date('fecha')->nullable();
             $table->time('hora')->nullable();
             $table->string('jornada')->nullable();
             $table->timestamps();
+            $table->softDeletes(); // para borrado lógico
         });
     }
 
