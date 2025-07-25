@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class EstadisticaEquipoController extends Controller
 {
-public function subirDesdeImagen(Request $request)
+    public function subirDesdeImagen(Request $request)
 {
     try {
         $request->validate([
@@ -23,35 +23,32 @@ public function subirDesdeImagen(Request $request)
         $filename = uniqid('ocr_') . '.' . $file->getClientOriginalExtension();
         $basename = pathinfo($filename, PATHINFO_FILENAME);
 
-        // Crear carpetas necesarias
-        $tempDir = storage_path('app/ocr_temp');
-        $processedDir = storage_path('app/ocr_processed');
-        $cutsDir = storage_path('app/ocr_cuts');
-        $tsvDir = storage_path('app/ocr_cuts_tsv');
-        foreach ([$tempDir, $processedDir, $cutsDir, $tsvDir] as $dir) {
+        $dirs = [
+            $tempDir = storage_path('app/ocr_temp'),
+            $processedDir = storage_path('app/ocr_processed'),
+            $cutsDir = storage_path('app/ocr_cuts'),
+            $tsvDir = storage_path('app/ocr_cuts_tsv'),
+        ];
+
+        foreach ($dirs as $dir) {
             if (!is_dir($dir)) mkdir($dir, 0775, true);
         }
 
-        // Guardar imagen original
         $fullTempPath = $tempDir . '/' . $filename;
         $file->move($tempDir, $filename);
 
-        // Procesar imagen a blanco/negro
         $processedPath = $processedDir . '/' . $filename;
         $this->procesarImagenGD($fullTempPath, $processedPath);
 
-        // Cargar imagen para cortes
         $img = $this->crearImagenGD($processedPath);
         $corteHorizontal = $this->detectarCorteHorizontal($img);
 
-        // Cortar superior
         $imgSuperior = imagecreatetruecolor(imagesx($img), $corteHorizontal);
         imagecopy($imgSuperior, $img, 0, 0, 0, 0, imagesx($img), $corteHorizontal);
         $rutaSuperior = $cutsDir . '/' . $basename . '_superior.png';
         imagepng($imgSuperior, $rutaSuperior);
         imagedestroy($imgSuperior);
 
-        // Cortar inferior
         $altoResto = imagesy($img) - $corteHorizontal;
         $imgResto = imagecreatetruecolor(imagesx($img), $altoResto);
         imagecopy($imgResto, $img, 0, 0, 0, $corteHorizontal, imagesx($img), $altoResto);
@@ -60,29 +57,41 @@ public function subirDesdeImagen(Request $request)
         $rutasCortesImgs = $this->guardarCortesImagenAutomaticoDesdeImg($imgResto, $cutsDir, $basename);
         imagedestroy($imgResto);
 
-        // Agregar ruta de imagen superior
         $rutasCortesImgs['superior'] = $rutaSuperior;
 
-        // Generar TSV
+        $esperados = ['superior', 'centro', 'izquierda', 'derecha'];
+        $faltantes = array_diff($esperados, array_keys($rutasCortesImgs));
+        if (!empty($faltantes)) {
+            throw new \Exception('Faltan imágenes de corte para: ' . implode(', ', $faltantes));
+        }
+
         $rutasTSV = [];
         foreach ($rutasCortesImgs as $tipo => $rutaImagen) {
+            \Log::info("Generando TSV para corte tipo: {$tipo}");
             $rutaTSV = $tsvDir . '/' . $basename . '_' . $tipo . '.tsv';
             $this->generarTSVconTesseract($rutaImagen, $rutaTSV);
+
+            if (!file_exists($rutaTSV)) {
+                throw new \Exception("No se generó el archivo TSV para tipo: {$tipo}");
+            }
+
             $rutasTSV[$tipo] = $rutaTSV;
         }
 
-        // Inicializar estructura de datos para equipos
+        $faltanTSV = array_filter($esperados, fn($tipo) => !file_exists($rutasTSV[$tipo] ?? ''));
+        if (!empty($faltanTSV)) {
+            throw new \Exception('Faltan archivos TSV para: ' . implode(', ', $faltanTSV));
+        }
+
         $datosEquipos = [
-            'equipo_izquierdo' => ['nombre' => '', 'stats' => [], 'detalles' => ['lineas' => []]],
-            'equipo_derecho' => ['nombre' => '', 'stats' => [], 'detalles' => ['lineas' => []]],
+            'equipo_izquierdo' => ['nombre' => '', 'marcador' => 0, 'stats' => [], 'detalles' => ['lineas' => []]],
+            'equipo_derecho' => ['nombre' => '', 'marcador' => 0, 'stats' => [], 'detalles' => ['lineas' => []]],
         ];
 
-        // Extraer datos con la función mejorada (que recibe &$datosEquipos para modificarlo)
         foreach ($rutasTSV as $tipo => $rutaAbsoluta) {
-            if (!file_exists($rutaAbsoluta)) continue;
-
             $contenidoTSV = file_get_contents($rutaAbsoluta);
-            // Esta función ahora debe recibir $datosEquipos por referencia
+            \Log::info("Procesando TSV para tipo: {$tipo} - tamaño contenido: " . strlen($contenidoTSV));
+
             $this->extraerDatosDesdeTSV($contenidoTSV, $tipo, $datosEquipos);
         }
 
@@ -95,9 +104,7 @@ public function subirDesdeImagen(Request $request)
             'tsv_cortes' => array_map(fn($p) => 'storage/app/ocr_cuts_tsv/' . basename($p), $rutasTSV),
         ]);
     } catch (\Throwable $e) {
-        Log::error('Error procesando imagen OCR: ' . $e->getMessage(), [
-            'trace' => $e->getTraceAsString(),
-        ]);
+        Log::error('Error procesando imagen OCR: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
         return response()->json([
             'success' => false,
             'error' => 'Error procesando la imagen: ' . $e->getMessage(),
@@ -107,86 +114,180 @@ public function subirDesdeImagen(Request $request)
 
 
 
+    // ------------------------------------------------------------------------
+    // FUNCIONES PRIVADAS
 
-
-
-/**
- * Ejecuta tesseract sobre una imagen y guarda el TSV resultante
- */
-private function generarTSVconTesseract(string $rutaImagen, string $rutaGuardarTSV): void
-{
-    // Comando Tesseract para generar TSV con PSM 6 (puedes ajustar si quieres)
-    $cmd = sprintf(
-        'tesseract %s %s --psm 6 tsv 2>&1',
-        escapeshellarg($rutaImagen),
-        escapeshellarg(str_replace('.tsv', '', $rutaGuardarTSV)) // tesseract no pide extensión en output
-    );
-
-    exec($cmd, $output, $returnVar);
-
-    if ($returnVar !== 0) {
-        throw new \Exception("Error ejecutando Tesseract: " . implode("\n", $output));
+    /**
+     * Ejecuta Tesseract para generar archivo TSV a partir de una imagen.
+     */
+    private function generarTSVconTesseract(string $rutaImagen, string $rutaGuardarTSV): void
+    {
+        $rutaSinExt = str_replace('.tsv', '', $rutaGuardarTSV);
+        $cmd = sprintf(
+            'tesseract %s %s --oem 3 --psm 6 tsv -c tessedit_char_whitelist="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%%().,-" 2>&1',
+            escapeshellarg($rutaImagen),
+            escapeshellarg($rutaSinExt)
+        );
+        exec($cmd, $output, $ret);
+        if ($ret !== 0) {
+            throw new \Exception("Error ejecutando Tesseract: " . implode("\n", $output));
+        }
+        if (!file_exists($rutaGuardarTSV)) {
+            throw new \Exception("No se generó el archivo TSV esperado: $rutaGuardarTSV");
+        }
     }
 
-    if (!file_exists($rutaGuardarTSV)) {
-        throw new \Exception("No se generó el archivo TSV esperado: $rutaGuardarTSV");
-    }
-}
-
-
+    /**
+     * Procesa la imagen para mejorar OCR (grises, binarización, filtros).
+     */
     private function procesarImagenGD(string $rutaOriginal, string $rutaProcesada): void
     {
         $img = $this->crearImagenGD($rutaOriginal);
-
         $width = imagesx($img);
         $height = imagesy($img);
 
+        imagefilter($img, IMG_FILTER_GRAYSCALE);
+
+        // Binarización con umbral 240
+        $blanco = imagecolorallocate($img, 255, 255, 255);
+        $negro = imagecolorallocate($img, 0, 0, 0);
         for ($x = 0; $x < $width; $x++) {
             for ($y = 0; $y < $height; $y++) {
                 $rgb = imagecolorat($img, $x, $y);
-                $r = ($rgb >> 16) & 0xFF;
-                $g = ($rgb >> 8) & 0xFF;
-                $b = $rgb & 0xFF;
+                $gray = $rgb & 0xFF;
+                imagesetpixel($img, $x, $y, ($gray > 240) ? $blanco : $negro);
+            }
+        }
 
-                // Si NO es blanco puro, pintar negro
-                if (!($r === 255 && $g === 255 && $b === 255)) {
-                    $negro = imagecolorallocate($img, 0, 0, 0);
-                    imagesetpixel($img, $x, $y, $negro);
+        // Erosión leve (elimina blanco aislado)
+        $imgCopy = imagecreatetruecolor($width, $height);
+        imagecopy($imgCopy, $img, 0, 0, 0, 0, $width, $height);
+        for ($x = 1; $x < $width - 1; $x++) {
+            for ($y = 1; $y < $height - 1; $y++) {
+                $pixel = imagecolorat($imgCopy, $x, $y) & 0xFF;
+                if ($pixel === 255) {
+                    $vecinosBlancos = 0;
+                    $vecinos = [
+                        imagecolorat($imgCopy, $x + 1, $y) & 0xFF,
+                        imagecolorat($imgCopy, $x - 1, $y) & 0xFF,
+                        imagecolorat($imgCopy, $x, $y + 1) & 0xFF,
+                        imagecolorat($imgCopy, $x, $y - 1) & 0xFF,
+                    ];
+                    foreach ($vecinos as $v) {
+                        if ($v === 255) $vecinosBlancos++;
+                    }
+                    if ($vecinosBlancos < 2) {
+                        imagesetpixel($img, $x, $y, $negro);
+                    }
                 }
             }
         }
+        imagedestroy($imgCopy);
+
+        // Dilatación leve (diagonales)
+        $imgCopyDil = imagecreatetruecolor($width, $height);
+        imagecopy($imgCopyDil, $img, 0, 0, 0, 0, $width, $height);
+        for ($x = 1; $x < $width - 1; $x++) {
+            for ($y = 1; $y < $height - 1; $y++) {
+                $pixel = imagecolorat($imgCopyDil, $x, $y) & 0xFF;
+                if ($pixel === 0) {
+                    $vecinosDiagonales = [
+                        imagecolorat($imgCopyDil, $x - 1, $y - 1) & 0xFF,
+                        imagecolorat($imgCopyDil, $x + 1, $y - 1) & 0xFF,
+                        imagecolorat($imgCopyDil, $x - 1, $y + 1) & 0xFF,
+                        imagecolorat($imgCopyDil, $x + 1, $y + 1) & 0xFF,
+                    ];
+                    foreach ($vecinosDiagonales as $v) {
+                        if ($v === 255) {
+                            imagesetpixel($img, $x, $y, $blanco);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        imagedestroy($imgCopyDil);
+
+        // Contraste fuerte
+        imagefilter($img, IMG_FILTER_CONTRAST, -40);
+
+        // Suavizado con convolución tipo Gaussian blur
+        $kernel = [
+            [1, 2, 1],
+            [2, 4, 2],
+            [1, 2, 1]
+        ];
+        imageconvolution($img, $kernel, 16, 0);
 
         imagepng($img, $rutaProcesada);
         imagedestroy($img);
     }
 
+    /**
+     * Crea recurso GD desde archivo (JPEG, PNG, GIF).
+     */
     private function crearImagenGD(string $ruta)
     {
         $info = getimagesize($ruta);
         $tipo = $info[2];
 
-        switch ($tipo) {
-            case IMAGETYPE_JPEG:
-                return imagecreatefromjpeg($ruta);
-            case IMAGETYPE_PNG:
-                return imagecreatefrompng($ruta);
-            case IMAGETYPE_GIF:
-                return imagecreatefromgif($ruta);
-            default:
-                throw new \Exception("Formato de imagen no soportado");
-        }
+        return match ($tipo) {
+            IMAGETYPE_JPEG => imagecreatefromjpeg($ruta),
+            IMAGETYPE_PNG => imagecreatefrompng($ruta),
+            IMAGETYPE_GIF => imagecreatefromgif($ruta),
+            default => throw new \Exception("Formato de imagen no soportado"),
+        };
     }
 
     /**
-     * Detecta corte horizontal para separar cabecera usando % pixeles blancos por fila.
-     * Retorna la coordenada Y para el corte (altura superior).
+     * Detecta el corte horizontal para separar parte superior y resto (basado en texto "resumen" o espacio).
      */
     private function detectarCorteHorizontal($img): int
     {
         $width = imagesx($img);
         $height = imagesy($img);
+        $limiteMaximoCorte = intval($height / 3);
 
-        $umbralBlanco = 0.8; // 80% blanco para considerar espacio
+        // Guardar temporal para OCR
+        $tmpImgPath = sys_get_temp_dir() . '/' . uniqid('ocr_', true) . '.png';
+        imagepng($img, $tmpImgPath);
+
+        $tsvPath = $tmpImgPath . '.tsv';
+        exec("tesseract " . escapeshellarg($tmpImgPath) . " " . escapeshellarg($tmpImgPath) . " --psm 6 tsv");
+
+        $posicionYResumen = null;
+
+        if (file_exists($tsvPath)) {
+            $tsv = file_get_contents($tsvPath);
+            unlink($tsvPath);
+            unlink($tmpImgPath);
+
+            $lineas = explode("\n", trim($tsv));
+            $header = str_getcsv(array_shift($lineas), "\t");
+            $colIndex = array_flip($header);
+
+            foreach ($lineas as $line) {
+                $cols = str_getcsv($line, "\t");
+                if (count($cols) < count($header)) continue;
+
+                $text = strtolower(trim($cols[$colIndex['text']] ?? ''));
+                if (strpos($text, 'resumen') !== false) {
+                    $posicionYResumen = intval($cols[$colIndex['top']] ?? 0);
+                    break;
+                }
+            }
+        } else {
+            unlink($tmpImgPath);
+        }
+
+        if ($posicionYResumen !== null) {
+            return max($posicionYResumen - 5, 0);
+        }
+
+        // Si no se encontró resumen, detectar espacios blancos para cortar
+        $umbralBlanco = 0.8;
+        $minAltoEspacio = 5;
+        $maxAltoEspacio = 50;
 
         $espacios = [];
         $enEspacio = false;
@@ -214,8 +315,7 @@ private function generarTSVconTesseract(string $rutaImagen, string $rutaGuardarT
                 if ($enEspacio) {
                     $finEspacio = $y - 1;
                     $altoEspacio = $finEspacio - $inicioEspacio + 1;
-                    // Considerar espacio válido si es entre 5 y 50 px
-                    if ($altoEspacio >= 5 && $altoEspacio <= 50) {
+                    if ($altoEspacio >= $minAltoEspacio && $altoEspacio <= $maxAltoEspacio) {
                         $espacios[] = ['inicio' => $inicioEspacio, 'fin' => $finEspacio];
                     }
                     $enEspacio = false;
@@ -225,429 +325,501 @@ private function generarTSVconTesseract(string $rutaImagen, string $rutaGuardarT
         if ($enEspacio) {
             $finEspacio = $height - 1;
             $altoEspacio = $finEspacio - $inicioEspacio + 1;
-            if ($altoEspacio >= 5 && $altoEspacio <= 50) {
+            if ($altoEspacio >= $minAltoEspacio && $altoEspacio <= $maxAltoEspacio) {
                 $espacios[] = ['inicio' => $inicioEspacio, 'fin' => $finEspacio];
             }
         }
 
         if (count($espacios) === 0) {
-            // No se detecta espacio, cortar a 1/5 de altura (por defecto)
             return intval($height / 5);
         }
 
-        // Tomar el primer espacio para corte
-        $primerEspacio = $espacios[0];
+        $lineaBusqueda = $espacios[0]['fin'] + 1;
 
-        // Devolver línea inmediatamente después del espacio para cortar abajo
-        return $primerEspacio['fin'] + 1;
-    }
+        $ultimaLineaNumeros = null;
+        $numerosConsecutivos = 0;
 
-
-private function guardarCortesImagenAutomaticoDesdeImg($img, string $dirSalida, string $basename): array
-{
-    $imgWidth = imagesx($img);
-    $imgHeight = imagesy($img);
-
-    // Convertir a escala de grises si no lo está
-    imagefilter($img, IMG_FILTER_GRAYSCALE);
-
-    // 1. Analizar verticalmente el contenido de la imagen para detectar columnas significativas (transiciones)
-    $histogramaX = array_fill(0, $imgWidth, 0);
-    for ($x = 0; $x < $imgWidth; $x++) {
-        $suma = 0;
-        for ($y = 0; $y < $imgHeight; $y++) {
-            $rgb = imagecolorat($img, $x, $y);
-            $gray = $rgb & 0xFF; // valor entre 0 (negro) y 255 (blanco)
-            if ($gray > 200) $suma++; // píxel blanco
-        }
-        $histogramaX[$x] = $suma;
-    }
-
-    // 2. Detectar columnas "claras" separadas por bloques oscuros = posibles límites
-    $limites = [];
-    $umbral = (int)($imgHeight * 0.8); // columna "blanca" si al menos 80% son blancos
-    $enBlanco = false;
-    for ($x = 0; $x < $imgWidth; $x++) {
-        if (!$enBlanco && $histogramaX[$x] >= $umbral) {
-            $inicio = $x;
-            $enBlanco = true;
-        } elseif ($enBlanco && $histogramaX[$x] < $umbral) {
-            $fin = $x;
-            if (($fin - $inicio) > 30) { // mínimo 30px de bloque blanco
-                $limites[] = [$inicio, $fin];
-            }
-            $enBlanco = false;
-        }
-    }
-
-    // 3. Aplicar OCR como confirmación del bloque central
-    $tmpImgPath = sys_get_temp_dir() . '/' . uniqid('ocr_', true) . '.png';
-    imagepng($img, $tmpImgPath);
-
-    $tsvPath = $tmpImgPath . '.tsv';
-    exec("tesseract " . escapeshellarg($tmpImgPath) . " " . escapeshellarg($tmpImgPath) . " --psm 6 tsv");
-
-    if (!file_exists($tsvPath)) {
-        unlink($tmpImgPath);
-        throw new \Exception("No se pudo generar el archivo TSV con Tesseract.");
-    }
-
-    $tsv = file_get_contents($tsvPath);
-    unlink($tmpImgPath);
-    unlink($tsvPath);
-
-    $lineas = explode("\n", trim($tsv));
-    $header = str_getcsv(array_shift($lineas), "\t");
-    $colIndex = array_flip($header);
-
-    $bloquesOCR = [];
-    foreach ($lineas as $line) {
-        $cols = str_getcsv($line, "\t");
-        if (count($cols) < count($header)) continue;
-
-        if (intval($cols[$colIndex['level']]) !== 5) continue;
-
-        $text = trim($cols[$colIndex['text']]);
-        if ($text === '') continue;
-
-        $line_num = intval($cols[$colIndex['line_num']]);
-        $left = intval($cols[$colIndex['left']]);
-        $width = intval($cols[$colIndex['width']]);
-
-        $bloquesOCR[$line_num][] = [
-            'text' => $text,
-            'left' => $left,
-            'right' => $left + $width,
-        ];
-    }
-
-    // Buscar patrón número – texto – número en cada línea OCR
-    $corteCentroX1 = null;
-    $corteCentroX2 = null;
-
-    foreach ($bloquesOCR as $palabras) {
-        // Buscar índice del primer número
-        $primerNumIdx = null;
-        for ($i = 0; $i < count($palabras); $i++) {
-            $t = preg_replace('/[^\d]/', '', $palabras[$i]['text']);
-            if (is_numeric($t) && $t !== '') {
-                $primerNumIdx = $i;
-                break;
-            }
-        }
-        if ($primerNumIdx === null) continue;
-
-        // Buscar índice del último número, debe estar después del primero
-        $ultimoNumIdx = null;
-        for ($j = count($palabras) - 1; $j > $primerNumIdx; $j--) {
-            $t = preg_replace('/[^\d]/', '', $palabras[$j]['text']);
-            if (is_numeric($t) && $t !== '') {
-                $ultimoNumIdx = $j;
-                break;
-            }
-        }
-        if ($ultimoNumIdx === null) continue;
-
-        // Asegurarse que haya texto entre los dos números
-        if ($ultimoNumIdx - $primerNumIdx < 2) continue;
-
-        // Cortar por fuera de los números, no justo en el límite
-        $corteCentroX1 = $palabras[$primerNumIdx]['left'];  // izquierda del primer número
-        $corteCentroX2 = $palabras[$ultimoNumIdx]['right']; // derecha del último número
-        break;
-    }
-
-    if (!$corteCentroX1 || !$corteCentroX2 || $corteCentroX2 <= $corteCentroX1) {
-        throw new \Exception("No se detectó un bloque central con patrón número – texto – número.");
-    }
-
-    // 4. Cortar las tres partes de la imagen
-    $anchoCentro = $corteCentroX2 - $corteCentroX1;
-    $anchoIzq = $corteCentroX1;
-    $anchoDer = $imgWidth - $corteCentroX2;
-
-    $rutas = [];
-
-    if ($anchoIzq > 0) {
-        $imgIzq = imagecreatetruecolor($anchoIzq, $imgHeight);
-        imagecopy($imgIzq, $img, 0, 0, 0, 0, $anchoIzq, $imgHeight);
-        $rutaIzq = $dirSalida . DIRECTORY_SEPARATOR . $basename . '_izq.png';
-        imagepng($imgIzq, $rutaIzq);
-        imagedestroy($imgIzq);
-        $rutas['izquierda'] = $rutaIzq;
-    } else {
-        $rutas['izquierda'] = null;
-    }
-
-    $imgCen = imagecreatetruecolor($anchoCentro, $imgHeight);
-    imagecopy($imgCen, $img, 0, 0, $corteCentroX1, 0, $anchoCentro, $imgHeight);
-    $rutaCen = $dirSalida . DIRECTORY_SEPARATOR . $basename . '_cen.png';
-    imagepng($imgCen, $rutaCen);
-    imagedestroy($imgCen);
-    $rutas['centro'] = $rutaCen;
-
-    if ($anchoDer > 0) {
-        $imgDer = imagecreatetruecolor($anchoDer, $imgHeight);
-        imagecopy($imgDer, $img, 0, 0, $corteCentroX2, 0, $anchoDer, $imgHeight);
-        $rutaDer = $dirSalida . DIRECTORY_SEPARATOR . $basename . '_der.png';
-        imagepng($imgDer, $rutaDer);
-        imagedestroy($imgDer);
-        $rutas['derecha'] = $rutaDer;
-    } else {
-        $rutas['derecha'] = null;
-    }
-
-    return $rutas;
-}
-
-
-private function extraerDatosDesdeTSV(string $tsvContent, string $tipo, array &$datosEquipos): void
-{
-    $lineas = explode("\n", trim($tsvContent));
-    if (count($lineas) === 0) {
-        return;
-    }
-
-    $header = str_getcsv(array_shift($lineas), "\t");
-    $colIndex = array_flip($header);
-
-    $palabras = [];
-
-    foreach ($lineas as $linea) {
-        $campos = str_getcsv($linea, "\t");
-        if (count($campos) < 12 || !is_numeric($campos[$colIndex['conf']])) continue;
-
-        $palabras[] = [
-            'text' => $campos[$colIndex['text']],
-            'left' => (int) $campos[$colIndex['left']],
-            'top' => (int) $campos[$colIndex['top']],
-            'conf' => (int) $campos[$colIndex['conf']],
-            'line_num' => (int) $campos[$colIndex['line_num']],
-        ];
-    }
-
-    switch ($tipo) {
-        case 'superior':
-            $this->extraerSuperior($palabras, $datosEquipos);
-            break;
-        case 'izquierda':
-            $this->extraerEstadisticasLado($palabras, $datosEquipos['equipo_izquierdo']);
-            break;
-        case 'derecha':
-            $this->extraerEstadisticasLado($palabras, $datosEquipos['equipo_derecho']);
-            break;
-        case 'centro':
-            $this->extraerCentro($palabras, $datosEquipos['equipo_izquierdo'], $datosEquipos['equipo_derecho']);
-            break;
-    }
-}
-
-
-private function extraerSuperior(array $palabras, array &$datosEquipos): void
-{
-    usort($palabras, fn($a, $b) => $a['top'] <=> $b['top']);
-    $primeras = array_filter($palabras, fn($p) => $p['top'] < 120 && strlen($p['text']) > 2);
-
-    $maxLeft = max(array_column($primeras, 'left'));
-    $umbral = $maxLeft / 2;
-
-    $izquierda = [];
-    $derecha = [];
-
-    foreach ($primeras as $p) {
-        if ($p['left'] < $umbral) {
-            $izquierda[] = $p['text'];
-        } else {
-            $derecha[] = $p['text'];
-        }
-    }
-
-    $datosEquipos['equipo_izquierdo']['nombre'] = trim(implode(' ', $izquierda));
-    $datosEquipos['equipo_derecho']['nombre'] = trim(implode(' ', $derecha));
-}
-
-
-private function extraerEstadisticasLado(array $palabras, array &$equipo): void
-{
-    $lineas = [];
-    foreach ($palabras as $p) {
-        $lineas[$p['line_num']][] = $p['text'];
-    }
-
-    $equipo['tasa_exito_regates'] = 'N/A';
-    $equipo['precision_tiros'] = 'N/A';
-    $equipo['precision_pases'] = 'N/A';
-
-    // Frases posibles con OCR errores comunes
-    $frasesEsperadas = [
-        'tasa_exito_regates' => ['tasa de exito en regate', 'tasa de éxito en regates', 'tasa exito regate'],
-        'precision_tiros' => ['precision en tiros', 'precisión en tiros', 'precision tiros', 'precision de tiros'],
-        'precision_pases' => ['precision de pases', 'precisión de pases', 'precision pases'],
-    ];
-
-    // Recorremos bloques consecutivos para intentar detectar valores
-    $bloques = array_values($lineas);
-    for ($i = 0; $i < count($bloques); $i++) {
-        $textoActual = strtolower(implode(' ', $bloques[$i]));
-
-        // Normalización
-        $frase = preg_replace('/[^a-z0-9%áéíóúñ\s]/iu', '', $textoActual);
-        $frase = str_replace('  ', ' ', trim($frase));
-
-        // Si contiene un porcentaje, buscamos a qué estadística pertenece
-        if (preg_match('/(\d{1,3})\s*%/', $frase, $matches)) {
-            $valor = $matches[1] . '%';
-
-            // Unimos varias líneas por si el texto está separado
-            $contexto = $frase;
-            if (isset($bloques[$i + 1])) {
-                $contexto .= ' ' . strtolower(implode(' ', $bloques[$i + 1]));
-            }
-            if (isset($bloques[$i + 2])) {
-                $contexto .= ' ' . strtolower(implode(' ', $bloques[$i + 2]));
-            }
-
-            $contexto = preg_replace('/[^a-z0-9%áéíóúñ\s]/iu', '', $contexto);
-            $contexto = str_replace('  ', ' ', trim($contexto));
-
-            foreach ($frasesEsperadas as $claveFinal => $variantes) {
-                foreach ($variantes as $variante) {
-                    if (strpos($contexto, $variante) !== false) {
-                        $equipo[$claveFinal] = $valor;
-                        break 2; // rompe ambos bucles
-                    }
+        for ($y = $lineaBusqueda; $y < $height && $y <= $limiteMaximoCorte; $y++) {
+            $pixelesOscuros = 0;
+            for ($x = 0; $x < $width; $x++) {
+                $rgb = imagecolorat($img, $x, $y);
+                $r = ($rgb >> 16) & 0xFF;
+                $g = ($rgb >> 8) & 0xFF;
+                $b = $rgb & 0xFF;
+                if ($r < 100 && $g < 100 && $b < 100) {
+                    $pixelesOscuros++;
                 }
             }
+
+            if ($pixelesOscuros > ($width * 0.1)) {
+                $ultimaLineaNumeros = $y;
+                $numerosConsecutivos++;
+            } else {
+                if ($numerosConsecutivos >= 1) {
+                    return min($ultimaLineaNumeros + 1, $limiteMaximoCorte);
+                }
+                $numerosConsecutivos = 0;
+            }
         }
+
+        if ($ultimaLineaNumeros !== null) {
+            return min($ultimaLineaNumeros + 1, $limiteMaximoCorte);
+        }
+
+        return min($lineaBusqueda, $limiteMaximoCorte);
     }
-}
 
+    /**
+     * Corta la imagen en izquierda, centro y derecha según análisis OCR y pixeles oscuros.
+     */
+    private function guardarCortesImagenAutomaticoDesdeImg($img, string $dirSalida, string $basename): array
+    {
+        $imgWidth = imagesx($img);
+        $imgHeight = imagesy($img);
 
-private function extraerCentro(array $palabras, array &$equipoIzq, array &$equipoDer): void
-{
-    $mapaClaves = [
-        'posesion' => ['posesion'],
-        'recuperacion_balon' => ['recuperacion de balon', 'recuperacion balon', 'recuperacion'],
-        'tiros' => ['tiros'],
-        'goles_esperados' => ['goles esperados', 'gol esperado', 'goles esperado'],
-        'pases' => ['pases'],
-        'entradas' => ['entradas'],
-        'entradas_con_exito' => ['entradas con exito', 'entradas con éxito'],
-        'recuperaciones' => ['recuperaciones'],
-        'atajadas' => ['atajadas'],
-        'faltas' => ['faltas', 'faltas cometidas', 'falta'],
-        'fueras_de_lugar' => ['fueras de lugar'],
-        'tiros_de_esquina' => ['tiros de esquina'],
-        'tiros_libres' => ['tiros libres'],
-        'penales' => ['penales'],
-        'tarjetas_amarillas' => ['tarjetas amarillas', 'tarjeta amarilla'],
-    ];
+        imagefilter($img, IMG_FILTER_GRAYSCALE);
 
-    // Agrupamos palabras por línea y ordenamos
-    $lineas = [];
-    foreach ($palabras as $p) {
-        $lineas[$p['line_num']][] = $p;
-    }
-    ksort($lineas);
+        $tmpImgPath = sys_get_temp_dir() . '/' . uniqid('ocr_', true) . '.png';
+        imagepng($img, $tmpImgPath);
 
-    // Inicializamos resultados con "N/A"
-    $resultadosIzq = array_fill_keys(array_keys($mapaClaves), 'N/A');
-    $resultadosDer = array_fill_keys(array_keys($mapaClaves), 'N/A');
+        $tsvPath = $tmpImgPath . '.tsv';
+        exec("tesseract " . escapeshellarg($tmpImgPath) . " " . escapeshellarg($tmpImgPath) . " --psm 6 tsv");
 
-    // Función para buscar valor numérico o N/A en las palabras de una línea,
-    // a la izquierda (izq) o derecha (der) de una posición (left referencia)
-    $buscarValorEnLinea = function(array $palabrasLinea, float $posLeft, string $lado) {
-        // Filtrar solo palabras que tienen texto numérico o N/A
-        $candidatos = [];
-        foreach ($palabrasLinea as $palabra) {
-            if (preg_match('/^\d+([.,]\d+)?%?$/', $palabra['text']) || strtoupper($palabra['text']) === 'N/A') {
-                $candidatos[] = $palabra;
-            }
+        if (!file_exists($tsvPath)) {
+            unlink($tmpImgPath);
+            throw new \Exception("No se pudo generar el archivo TSV con Tesseract.");
         }
-        if (empty($candidatos)) return 'N/A';
 
-        if ($lado === 'izq') {
-            // Elegir el candidato con posición left más cercana y menor a posLeft
-            $filtrados = array_filter($candidatos, fn($p) => $p['left'] < $posLeft);
-            if ($filtrados) {
-                usort($filtrados, fn($a, $b) => ($posLeft - $a['left']) <=> ($posLeft - $b['left']));
-                return strtoupper(str_replace(',', '.', $filtrados[0]['text']));
-            }
-            // Si no hay a la izquierda, tomar el más cercano a la derecha
-            usort($candidatos, fn($a, $b) => abs($a['left'] - $posLeft) <=> abs($b['left'] - $posLeft));
-            return strtoupper(str_replace(',', '.', $candidatos[0]['text']));
-        } else {
-            // lado derecho: buscar candidato con left mayor a posLeft
-            $filtrados = array_filter($candidatos, fn($p) => $p['left'] > $posLeft);
-            if ($filtrados) {
-                usort($filtrados, fn($a, $b) => ($a['left'] - $posLeft) <=> ($b['left'] - $posLeft));
-                return strtoupper(str_replace(',', '.', $filtrados[0]['text']));
-            }
-            // fallback candidato más cercano
-            usort($candidatos, fn($a, $b) => abs($a['left'] - $posLeft) <=> abs($b['left'] - $posLeft));
-            return strtoupper(str_replace(',', '.', $candidatos[0]['text']));
-        }
-    };
+        $tsv = file_get_contents($tsvPath);
+        unlink($tmpImgPath);
+        unlink($tsvPath);
 
-    // Para cada clave en orden
-    foreach ($mapaClaves as $clave => $variantes) {
-        $encontradoIzq = false;
-        $encontradoDer = false;
+        $lineas = explode("\n", trim($tsv));
+        $header = str_getcsv(array_shift($lineas), "\t");
+        $colIndex = array_flip($header);
 
-        // Buscar en todas las líneas
-        foreach ($lineas as $lineNum => $palabrasLinea) {
-            // Ordenar palabras por left
-            usort($palabrasLinea, fn($a, $b) => $a['left'] <=> $b['left']);
+        $posLB = null; // corte borde derecho para lado izquierdo
+        $posRB = null; // corte borde izquierdo para lado derecho
+        $posResumen = null; // posición "Resumen"
 
-            // Texto línea para búsqueda
-            $textoLinea = strtolower(trim(implode(' ', array_column($palabrasLinea, 'text'))));
+        foreach ($lineas as $line) {
+            $cols = str_getcsv($line, "\t");
+            if (count($cols) < count($header)) continue;
 
-            foreach ($variantes as $variante) {
-                if (strpos($textoLinea, $variante) !== false) {
-                    // Encontramos la línea con la clave
+            $text = strtoupper(trim($cols[$colIndex['text']] ?? ''));
+            if ($text === '') continue;
 
-                    // Buscar posición horizontal de la palabra clave (primera palabra de la variante)
-                    $varPalabras = explode(' ', $variante);
-                    $posClave = null;
-                    foreach ($palabrasLinea as $palabra) {
-                        if (strtolower($palabra['text']) === strtolower($varPalabras[0])) {
-                            $posClave = $palabra['left'];
+            $left = (int)$cols[$colIndex['left']];
+            $top = (int)$cols[$colIndex['top']];
+            $width = (int)$cols[$colIndex['width']];
+            $height = (int)$cols[$colIndex['height']];
+            $right = $left + $width;
+
+            if (strpos($text, 'LB') !== false) {
+                // Buscar borde real derecho desde derecha hacia izquierda, pixel oscuro
+                $bordeDerechoReal = $left;
+                for ($xPix = $right - 1; $xPix >= $left; $xPix--) {
+                    $colOscura = false;
+                    for ($yPix = $top; $yPix < $top + $height; $yPix++) {
+                        if ($xPix >= $imgWidth || $yPix >= $imgHeight) continue;
+                        $rgb = imagecolorat($img, $xPix, $yPix);
+                        if (($rgb & 0xFF) < 100) {
+                            $colOscura = true;
                             break;
                         }
                     }
-                    if ($posClave === null) {
-                        // fallback: usar palabra central
-                        $posClave = $palabrasLinea[intval(count($palabrasLinea)/2)]['left'];
+                    if ($colOscura) {
+                        $bordeDerechoReal = $xPix + 1;
+                        break;
+                    }
+                }
+                $margenNegativo = 5;
+                $posLB = max($posLB ?? 0, max($left, $bordeDerechoReal - $margenNegativo));
+            }
+
+            if (strpos($text, 'RB') !== false) {
+                if ($posRB === null || $left < $posRB) {
+                    $posRB = $left;
+                }
+            }
+
+            if (strpos($text, 'RESUMEN') !== false) {
+                if ($posResumen === null || $left < $posResumen) {
+                    $posResumen = $left;
+                }
+            }
+        }
+
+        if ($posLB === null) $posLB = intval($imgWidth * 0.3);
+        if ($posRB === null) $posRB = intval($imgWidth * 0.7);
+        if ($posResumen === null) $posResumen = $posLB;
+
+        if ($posLB >= $posResumen) {
+            $posLB = max(0, $posResumen - 20);
+        }
+        if ($posRB <= $posResumen) {
+            $posRB = min($imgWidth, $posResumen + 20);
+        }
+
+        // Cortes: izquierda, centro, derecha
+        $cortes = [];
+
+        // Izquierda (desde 0 hasta posLB)
+        $wIzq = $posLB;
+        $imgIzq = imagecreatetruecolor($wIzq, $imgHeight);
+        imagecopy($imgIzq, $img, 0, 0, 0, 0, $wIzq, $imgHeight);
+        $rutaIzquierda = $dirSalida . '/' . $basename . '_izquierda.png';
+        imagepng($imgIzq, $rutaIzquierda);
+        imagedestroy($imgIzq);
+        $cortes['izquierda'] = $rutaIzquierda;
+
+        // Centro (de posLB a posRB)
+        $wCentro = $posRB - $posLB;
+        $imgCentro = imagecreatetruecolor($wCentro, $imgHeight);
+        imagecopy($imgCentro, $img, 0, 0, $posLB, 0, $wCentro, $imgHeight);
+        $rutaCentro = $dirSalida . '/' . $basename . '_centro.png';
+        imagepng($imgCentro, $rutaCentro);
+        imagedestroy($imgCentro);
+        $cortes['centro'] = $rutaCentro;
+
+        // Derecha (de posRB a ancho total)
+        $wDer = $imgWidth - $posRB;
+        $imgDer = imagecreatetruecolor($wDer, $imgHeight);
+        imagecopy($imgDer, $img, 0, 0, $posRB, 0, $wDer, $imgHeight);
+        $rutaDerecha = $dirSalida . '/' . $basename . '_derecha.png';
+        imagepng($imgDer, $rutaDerecha);
+        imagedestroy($imgDer);
+        $cortes['derecha'] = $rutaDerecha;
+
+        return $cortes;
+    }
+
+private function extraerDatosDesdeTSV(string $tsvContenido, string $tipoImagen, array &$datosEquipos): void
+{
+    $tipoImagen = strtolower(trim($tipoImagen));
+    \Log::info("extraerDatosDesdeTSV con tipoImagen: '{$tipoImagen}'");
+
+    $lineas = explode("\n", trim($tsvContenido));
+    $headers = null;
+    $tsvFilas = [];
+
+    foreach ($lineas as $linea) {
+        $cols = explode("\t", $linea);
+        if (!$headers) {
+            $headers = $cols;
+            continue;
+        }
+        $fila = [];
+        foreach ($headers as $i => $header) {
+            $fila[$header] = $cols[$i] ?? null;
+            if (is_numeric($fila[$header])) {
+                $fila[$header] = (strpos($fila[$header], '.') !== false) ? floatval($fila[$header]) : intval($fila[$header]);
+            }
+        }
+        $tsvFilas[] = $fila;
+    }
+
+    if (!isset($datosEquipos['equipo_izquierdo'])) {
+        $datosEquipos['equipo_izquierdo'] = ['stats' => []];
+    }
+    if (!isset($datosEquipos['equipo_derecho'])) {
+        $datosEquipos['equipo_derecho'] = ['stats' => []];
+    }
+
+    $estadisticasLado = [
+        'regates_exitosos' => ['TASADEEXITOENREGATES', 'TASA DE EXITO EN REGATES'],
+        'precision_tiros' => ['PRECISIONENTIROS', 'PRECISION EN TIROS'],
+        'precision_pases' => ['PRECISIONDEPASES', 'PRECISION DE PASES'],
+    ];
+
+    switch ($tipoImagen) {
+        case 'superior':
+            \Log::info("Llamando extraerSuperior");
+            $this->extraerSuperior($tsvFilas, $datosEquipos);
+            break;
+        case 'centro':
+            \Log::info("Llamando extraerCentro");
+            $this->extraerCentro($tsvFilas, $datosEquipos);
+            break;
+        case 'izquierda':
+            \Log::info("Llamando extraerLado para equipo_izquierdo");
+            $this->extraerLado($tsvFilas, $datosEquipos, 'equipo_izquierdo', $estadisticasLado);
+            break;
+        case 'derecha':
+            \Log::info("Llamando extraerLado para equipo_derecho");
+            $this->extraerLado($tsvFilas, $datosEquipos, 'equipo_derecho', $estadisticasLado);
+            break;
+        default:
+            \Log::warning("Tipo de imagen no reconocido en extraerDatosDesdeTSV: {$tipoImagen}");
+            break;
+    }
+}
+
+private function extraerLado(array $tsvRows, array &$datosEquipos, string $claveEquipo, array $estadisticas): void
+{
+    // Inicializar con 'N/A'
+    foreach ($estadisticas as $key => $_) {
+        $datosEquipos[$claveEquipo]['stats'][$key] = 'N/A';
+    }
+
+    $normalizarTexto = fn($texto) => str_replace(
+        [' ', 'á', 'é', 'í', 'ó', 'ú', 'ñ'],
+        ['', 'a', 'e', 'i', 'o', 'u', 'n'],
+        strtolower(trim($texto))
+    );
+
+    $normalizarValor = function ($valor) {
+        $valor = trim($valor);
+
+        if (str_ends_with($valor, '%')) {
+            $num = rtrim($valor, '%');
+            if (is_numeric($num)) {
+                return $num . '%';
+            }
+            return 'N/A';
+        }
+
+        $valorLower = strtolower($valor);
+        $equivCero = ['oo', 'o0', '0o', 'o', '0', 'óo', 'oó', 'oóo', 'o0o'];
+        if (in_array($valorLower, $equivCero, true)) {
+            return '0';
+        }
+
+        if (is_numeric($valor)) {
+            return $valor;
+        }
+
+        return $valor;
+    };
+
+    $indexPorLinea = [];
+    foreach ($tsvRows as $row) {
+        $lineNum = $row['line_num'] ?? 0;
+        $wordNum = $row['word_num'] ?? 0;
+        $indexPorLinea[$lineNum][$wordNum] = $row;
+    }
+
+    $faltantes = [];
+
+    for ($i = 0; $i < count($tsvRows); $i++) {
+        $texto = $normalizarTexto($tsvRows[$i]['text'] ?? '');
+
+        foreach ($estadisticas as $key => $variantes) {
+            foreach ($variantes as $variante) {
+                if ($texto === $normalizarTexto($variante)) {
+                    $lineNum = $tsvRows[$i]['line_num'];
+                    $wordNum = $tsvRows[$i]['word_num'];
+
+                    $valIzq = $indexPorLinea[$lineNum][$wordNum - 1]['text'] ?? '';
+                    $valDer = $indexPorLinea[$lineNum][$wordNum + 1]['text'] ?? '';
+                    $valArriba = $indexPorLinea[$lineNum - 1][$wordNum]['text'] ?? '';
+                    $valAbajo = $indexPorLinea[$lineNum + 1][$wordNum]['text'] ?? '';
+
+                    $valorEncontrado = null;
+                    foreach ([$valIzq, $valDer, $valArriba, $valAbajo] as $posibleValor) {
+                        if ($posibleValor !== '' && strtolower(trim($posibleValor)) !== strtolower(trim($variante))) {
+                            $valorEncontrado = $posibleValor;
+                            break;
+                        }
                     }
 
-                    // Buscar valor para equipo izquierdo (a la izquierda)
-                    if (!$encontradoIzq) {
-                        $valIzq = $buscarValorEnLinea($palabrasLinea, $posClave, 'izq');
-                        $resultadosIzq[$clave] = $valIzq;
-                        $encontradoIzq = true;
+                    if ($valorEncontrado !== null) {
+                        $normalizado = $normalizarValor($valorEncontrado);
+                        $datosEquipos[$claveEquipo]['stats'][$key] = $normalizado;
+                        \Log::info("ExtraerLado - {$claveEquipo} - {$key}: {$normalizado}");
+                    } else {
+                        $faltantes[] = $variante;
                     }
 
-                    // Buscar valor para equipo derecho (a la derecha)
-                    if (!$encontradoDer) {
-                        $valDer = $buscarValorEnLinea($palabrasLinea, $posClave, 'der');
-                        $resultadosDer[$clave] = $valDer;
-                        $encontradoDer = true;
-                    }
-
-                    // Si ambos encontrados, siguiente clave
-                    if ($encontradoIzq && $encontradoDer) {
-                        break 3;
-                    }
+                    continue 3;
                 }
             }
         }
     }
 
-    // Guardar resultados
-    $equipoIzq['estadisticas'] = $resultadosIzq;
-    $equipoDer['estadisticas'] = $resultadosDer;
+    if (!empty($faltantes)) {
+        \Log::info("No se encontró valor para las métricas en lado {$claveEquipo}: " . implode(', ', $faltantes));
+    }
 }
 
+/**
+ * Extrae las estadísticas del centro y las asigna directamente en $datosEquipos.
+ *
+ * @param array $tsvRows Filas TSV parseadas
+ * @param array &$datosEquipos Referencia al array de datos para modificar
+ * @return void
+ */
+/**
+ * Extrae las estadísticas del centro y las asigna directamente en $datosEquipos.
+ *
+ * @param array $tsvRows Filas TSV parseadas
+ * @param array &$datosEquipos Referencia al array de datos para modificar
+ * @return void
+ */
+private function extraerCentro(array $tsvRows, array &$datosEquipos): void
+{
+    $estadisticas = [
+        'posesion' => ['%deposesion', '%deposesi6n', 'posesion', 'posesión'],
+        'recuperacion_balon' => ['recuperaciondebaldn(seg.)', 'recuperación de balón', 'recuperacion de balon', 'recuperacion de balon (seg.)'],
+        'tiros' => ['tiros'],
+        'goles_esperados' => ['golesesperados', 'goles esperados'],
+        'pases' => ['pases'],
+        'entradas' => ['entradas'],
+        'entradas_con_exito' => ['entradasconexito', 'entradas con éxito', 'entradas con exito'],
+        'recuperaciones' => ['recuperaciones'],
+        'atajadas' => ['atajadas'],
+        'faltas_cometidas' => ['faltascometidas', 'faltas cometidas'],
+        'fuera_de_lugar' => ['fuerasdelugar', 'fuera de lugar'],
+        'tiros_de_esquina' => ['tirosdeesquina', 'tiros de esquina'],
+        'tiros_libres' => ['tiroslibres', 'tiros libres'],
+        'penales' => ['penales'],
+        'tarjetas_amarillas' => ['tarjetasamarillas', 'tarjetas amarillas'],
+    ];
+
+    // Inicializar todo en "N/A"
+    foreach ($estadisticas as $key => $_) {
+        $datosEquipos['equipo_izquierdo']['stats'][$key] = 'N/A';
+        $datosEquipos['equipo_derecho']['stats'][$key] = 'N/A';
+    }
+
+    // Normalizar texto para comparar
+    $normalizarTexto = function ($texto) {
+        $texto = strtolower(trim($texto));
+        $texto = str_replace(
+            [' ', 'á', 'é', 'í', 'ó', 'ú', 'ñ'],
+            ['', 'a', 'e', 'i', 'o', 'u', 'n'],
+            $texto
+        );
+        return $texto;
+    };
+
+    // Normalizar valor, limpiar % y corregir posibles errores OCR de ceros
+    $normalizarValor = function ($valor) {
+        $valor = strtolower(trim($valor));
+        $valor = str_replace(',', '.', $valor); // Normalizar decimales con coma
+
+        $equivCero = ['oo', 'o0', '0o', 'o', '0', 'óo', 'oó', 'oóo', 'o0o'];
+        if (in_array($valor, $equivCero, true)) {
+            return '0';
+        }
+
+        if (str_ends_with($valor, '%')) {
+            $num = rtrim($valor, '%');
+            if (is_numeric($num)) {
+                return $num . '%';
+            }
+            return 'N/A';
+        }
+
+        // Si es numérico simple, devolverlo
+        if (is_numeric($valor)) {
+            return $valor;
+        }
+
+        return 'N/A';
+    };
+
+    // Indexar por line_num y word_num para búsqueda relativa
+    $indexPorLinea = [];
+    foreach ($tsvRows as $row) {
+        $lineNum = $row['line_num'] ?? 0;
+        $wordNum = $row['word_num'] ?? 0;
+        $indexPorLinea[$lineNum][$wordNum] = $row;
+    }
+
+    // Buscar cada estadística
+    foreach ($tsvRows as $row) {
+        $texto = $normalizarTexto($row['text'] ?? '');
+        $lineNum = $row['line_num'] ?? null;
+        $wordNum = $row['word_num'] ?? null;
+
+        foreach ($estadisticas as $key => $variantes) {
+            foreach ($variantes as $variante) {
+                if ($texto === $normalizarTexto($variante)) {
+                    // Buscar valores alrededor del texto clave: izquierda, derecha, arriba, abajo
+                    $valoresPosibles = [];
+
+                    if ($lineNum !== null && $wordNum !== null) {
+                        $valoresPosibles[] = $indexPorLinea[$lineNum][$wordNum - 1]['text'] ?? '';
+                        $valoresPosibles[] = $indexPorLinea[$lineNum][$wordNum + 1]['text'] ?? '';
+                        $valoresPosibles[] = $indexPorLinea[$lineNum - 1][$wordNum]['text'] ?? '';
+                        $valoresPosibles[] = $indexPorLinea[$lineNum + 1][$wordNum]['text'] ?? '';
+
+                        // También buscar dos palabras a la derecha si la primera es vacía o no válida
+                        if (empty(trim($valoresPosibles[1])) && isset($indexPorLinea[$lineNum][$wordNum + 2])) {
+                            $valoresPosibles[1] = $indexPorLinea[$lineNum][$wordNum + 2]['text'];
+                        }
+                    }
+
+                    foreach ($valoresPosibles as $valor) {
+                        $valorNorm = $normalizarValor($valor);
+                        if ($valorNorm !== 'N/A' && $valorNorm !== '' && strtolower($valorNorm) !== strtolower($variante)) {
+                            $datosEquipos['equipo_izquierdo']['stats'][$key] = $valorNorm;
+                            $datosEquipos['equipo_derecho']['stats'][$key] = $valorNorm;
+                            break 3; // Salir completamente y pasar al siguiente
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
+
+/**
+ * Extrae nombres de equipos y marcador del corte superior.
+ *
+ * @param array $tsvRows TSV parseado en filas
+ * @param array &$datosEquipos Referencia para asignar los datos
+ * @return void
+ */
+private function extraerSuperior(array $tsvRows, array &$datosEquipos): void
+{
+    // Inicializar
+    $datosEquipos['equipo_izquierdo']['nombre'] = 'N/A';
+    $datosEquipos['equipo_derecho']['nombre'] = 'N/A';
+    $datosEquipos['marcador'] = 'N/A';
+
+    // 1) Buscar nombres de equipos: usualmente en primeras líneas (line_num bajos)
+    // Tomaremos palabras con más de 2 letras para evitar basura
+
+    $nombresDetectados = [];
+    foreach ($tsvRows as $fila) {
+        if ($fila['level'] == 5) {
+            $texto = trim($fila['text']);
+            if (strlen($texto) > 2 && preg_match('/^[\w\s\.\-]+$/u', $texto)) {
+                $nombresDetectados[$fila['left']] = $texto; // usamos 'left' para ordenarlos visualmente
+            }
+        }
+    }
+
+    // Ordenar por posición horizontal (left)
+    ksort($nombresDetectados);
+
+    $nombres = array_values($nombresDetectados);
+
+    // Asignar nombres a los equipos (los 2 primeros textos horizontales encontrados)
+    if (count($nombres) >= 2) {
+        $datosEquipos['equipo_izquierdo']['nombre'] = $nombres[0];
+        $datosEquipos['equipo_derecho']['nombre'] = $nombres[1];
+    }
+
+    // 2) Buscar marcador en el texto: suele estar en formato 0-0, 2:1, 3 - 2, etc.
+    // Lo buscaremos en las líneas, usualmente en la misma línea o cerca
+
+    $marcadorRegex = '/\b(\d+)\s*[-:]\s*(\d+)\b/';
+
+    foreach ($tsvRows as $fila) {
+        if ($fila['level'] == 5) {
+            if (preg_match($marcadorRegex, $fila['text'], $matches)) {
+                $datosEquipos['marcador'] = $matches[0];
+                break;
+            }
+        }
+    }
+}
 
 
 

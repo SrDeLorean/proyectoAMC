@@ -13,9 +13,9 @@ class CreateEstadisticaEquiposTable extends Migration
 
             // Relación con el equipo (ajusta el nombre de la tabla si es diferente)
             $table->foreignId('equipo_id')->constrained()->onDelete('cascade');
-
             // Relación con la competencia o partido (ajusta según modelo)
             $table->foreignId('calendario_id')->constrained()->onDelete('cascade');
+
 
             // Estadísticas del equipo
             $table->unsignedTinyInteger('posesion')->nullable();                    // Porcentaje de posesión
@@ -37,8 +37,12 @@ class CreateEstadisticaEquiposTable extends Migration
             $table->unsignedTinyInteger('tiros_libres')->nullable();               // Tiros libres
             $table->unsignedTinyInteger('penales')->nullable();                    // Penales
             $table->unsignedTinyInteger('tarjetas_amarillas')->nullable();         // Tarjetas amarillas
+            $table->boolean('procesado')->default(false); // Indica si la estadística ha sido procesada
+            $table->string('foto')->nullable();
 
             $table->timestamps();
+
+            $table->softDeletes(); // Para borrado lógico
         });
     }
 
