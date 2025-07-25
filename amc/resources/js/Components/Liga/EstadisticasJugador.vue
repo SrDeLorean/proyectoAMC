@@ -1,8 +1,8 @@
 <template>
-  <div class="max-w-sm mx-auto bg-white shadow-md overflow-hidden font-sans rounded-none">
+  <div class="max-w-sm mx-auto bg-white shadow-md overflow-hidden font-sans rounded-none relative">
     <div class="w-full cursor-pointer select-none" @click="onClick">
       <div
-        class="relative flex flex-col text-white pb-[100px] rounded-none"
+        class="relative flex flex-col text-white pb-[100px] rounded-none overflow-hidden"
         :style="{
           backgroundColor,
           backgroundRepeat: 'no-repeat',
@@ -13,6 +13,7 @@
         <div class="absolute top-2 left-4 z-20">
           <h2 class="text-xl font-extrabold uppercase leading-tight tracking-tight m-0 p-0">{{ title }}</h2>
         </div>
+
         <div class="absolute bottom-0 left-6 w-16 h-16 z-30 flex items-end p-1">
           <img
             :src="players[0].clubLogo"
@@ -20,37 +21,40 @@
             class="max-w-full max-h-full object-contain"
           />
         </div>
+
+        <!-- Imagen superior posicionada flotante, sin afectar el layout -->
         <div
-          class="absolute right-4 w-[120px] h-[120px] z-10 rounded-none overflow-hidden"
-          :style="{ backgroundColor, bottom: '-40px' }"
-        >
-          <img
-            :src="players[0].playerImage"
-            :alt="players[0].playerName"
-            class="block w-full h-full min-w-[120px] min-h-[120px] object-cover object-top drop-shadow-[0_8px_12px_rgba(0,0,0,0.8)] rounded-none"
-            @error="onImageError"
-          />
+            class="absolute right-4 z-10 rounded-none overflow-hidden w-[140px] h-[140px] drop-shadow-xl"
+            style="bottom: -50px;"
+            >
+            <img
+                :src="players[0].playerImage"
+                :alt="players[0].playerName"
+                class="w-full h-full object-cover object-top min-w-[140px] min-h-[140px] rounded-none"
+                @error="onImageError"
+            />
         </div>
       </div>
 
+      <!-- Línea principal con nombre y valor juntos -->
       <div
-        class="flex justify-between items-center px-4 py-1 font-semibold text-lg bg-opacity-90 select-none rounded-none border-b border-gray-300"
+        class="flex justify-between items-center gap-2 px-4 py-1 font-semibold text-lg bg-opacity-90 select-none rounded-none border-b border-gray-300"
         :style="{ backgroundColor, color: 'white' }"
       >
-        <div>
+        <div class="flex-1 truncate">
           <span class="font-mono mr-2 font-normal align-middle">{{ players[0].rank }}</span>
           <span>
             <span class="font-normal">{{ getFirstName(players[0].firstName) }}</span>
-            <span
-              class="font-normal"
-              >{{ getSecondName(players[0].firstName) ? ' ' + getSecondName(players[0].firstName) : '' }}</span
-            >
+            <span class="font-normal">
+              {{ getSecondName(players[0].firstName) ? ' ' + getSecondName(players[0].firstName) : '' }}
+            </span>
             <strong> {{ players[0].lastName }}</strong>
           </span>
         </div>
-        <div class="font-bold text-2xl">{{ players[0].statValue }}</div>
+        <div class="font-bold text-2xl whitespace-nowrap">{{ players[0].statValue }}</div>
       </div>
 
+      <!-- Lista de los otros jugadores -->
       <div class="px-4 py-1 bg-white text-gray-900 rounded-none border-t border-gray-300">
         <div
           v-for="player in players.slice(1)"
@@ -65,9 +69,11 @@
             @error="onImageError"
           />
           <div class="flex-1 truncate">
-            <span class="font-normal">{{ getFirstName(player.firstName) }}</span
-            ><span class="font-normal">{{ getSecondName(player.firstName) ? ' ' + getSecondName(player.firstName) : '' }}</span
-            ><strong>{{ player.lastName }}</strong>
+            <span class="font-normal">{{ getFirstName(player.firstName) }}</span>
+            <span class="font-normal">
+              {{ getSecondName(player.firstName) ? ' ' + getSecondName(player.firstName) : '' }}
+            </span>
+            <strong>{{ player.lastName }}</strong>
           </div>
           <img
             :src="player.clubLogo"

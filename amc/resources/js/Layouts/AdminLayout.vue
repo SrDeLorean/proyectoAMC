@@ -1,198 +1,162 @@
 <script setup>
-import { ref } from 'vue';
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
-import Dropdown from '@/Components/Dropdown.vue';
-import DropdownLink from '@/Components/DropdownLink.vue';
-import NavLink from '@/Components/NavLink.vue';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
-import { Link } from '@inertiajs/vue3';
+import AppLayout from '@/Layouts/AppLayout.vue'
+import NavLink from '@/Components/NavLink.vue'
+import { ref, computed } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 
-const showingNavigationDropdown = ref(false);
+const props = defineProps({
+  title: String,
+})
+
+const page = usePage()
+const user = computed(() => page.props.auth?.user ?? null)
+
+const showingMenu = ref(false)
+
+function onMouseEnter() {
+  showingMenu.value = true
+}
+
+function onMouseLeave() {
+  showingMenu.value = false
+}
+
+function toggleMenu() {
+  showingMenu.value = !showingMenu.value
+}
 </script>
 
 <template>
-    <div>
-        <div class="min-h-screen bg-gray-100">
-            <nav
-                class="border-b border-gray-100 bg-white"
-            >
-                <!-- Primary Navigation Menu -->
-                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div class="flex h-16 justify-between">
-                        <div class="flex">
-                            <!-- Logo -->
-                            <div class="flex shrink-0 items-center">
-                                <Link :href="route('dashboard')">
-                                    <ApplicationLogo
-                                        class="block h-9 w-auto fill-current text-gray-800"
-                                    />
-                                </Link>
-                            </div>
+  <AppLayout :title="props.title">
+    <template #nav>
+      <div
+        @mouseenter="onMouseEnter"
+        @mouseleave="onMouseLeave"
+        class="relative inline-block"
+      >
+        <button
+          @click="toggleMenu"
+          class="text-white bg-gray-800 hover:bg-gray-700 px-3 py-2 rounded-md transition flex items-center"
+          aria-haspopup="true"
+          :aria-expanded="showingMenu.toString()"
+        >
+          Menú
+          <svg
+            class="h-4 w-4 ml-1 text-red-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-                            <!-- Navigation Links -->
-                            <div
-                                class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex"
-                            >
-                                <NavLink
-                                    :href="route('dashboard')"
-                                    :active="route().current('dashboard')"
-                                >
-                                    Dashboard
-                                </NavLink>
-                            </div>
-                        </div>
+        <transition name="fade">
+          <div
+            v-show="showingMenu"
+            class="absolute mt-2 bg-gray-900 border border-red-600 rounded-md shadow-lg p-4 min-w-[240px] z-50"
+          >
+            <!-- Grupo Administración -->
+            <div class="mb-4">
+              <h3 class="text-red-500 uppercase font-semibold mb-2 border-b border-red-600 pb-1">
+                Administración
+              </h3>
 
-                        <div class="hidden sm:ms-6 sm:flex sm:items-center">
-                            <!-- Settings Dropdown -->
-                            <div class="relative ms-3">
-                                <Dropdown align="right" width="48">
-                                    <template #trigger>
-                                        <span class="inline-flex rounded-md">
-                                            <button
-                                                type="button"
-                                                class="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
-                                            >
-                                                {{ $page.props.auth.user.name }}
+              <NavLink
+                :href="route('admin.users.index')"
+                :active="route().current('admin.users.index')"
+                v-if="user?.role === 'administrador'"
+                class="block text-white hover:text-red-500 mb-1"
+                active-class="bg-gray-900 text-red-500 rounded-md px-3 py-2"
+              >
+                Usuarios
+              </NavLink>
 
-                                                <svg
-                                                    class="-me-0.5 ms-2 h-4 w-4"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                >
-                                                    <path
-                                                        fill-rule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clip-rule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </span>
-                                    </template>
+              <NavLink
+                :href="route('admin.equipos.index')"
+                :active="route().current('admin.equipos.index')"
+                v-if="user?.role === 'administrador'"
+                class="block text-white hover:text-red-500 mb-1"
+                active-class="bg-gray-900 text-red-500 rounded-md px-3 py-2"
+              >
+                Equipos
+              </NavLink>
 
-                                    <template #content>
-                                        <DropdownLink
-                                            :href="route('profile.edit')"
-                                        >
-                                            Profile
-                                        </DropdownLink>
-                                        <DropdownLink
-                                            :href="route('logout')"
-                                            method="post"
-                                            as="button"
-                                        >
-                                            Log Out
-                                        </DropdownLink>
-                                    </template>
-                                </Dropdown>
-                            </div>
-                        </div>
+              <NavLink
+                :href="route('admin.plantillas.index')"
+                :active="route().current('admin.plantillas.index')"
+                v-if="user?.role === 'administrador'"
+                class="block text-white hover:text-red-500"
+                active-class="bg-gray-900 text-red-500 rounded-md px-3 py-2"
+              >
+                Plantillas
+              </NavLink>
+            </div>
 
-                        <!-- Hamburger -->
-                        <div class="-me-2 flex items-center sm:hidden">
-                            <button
-                                @click="
-                                    showingNavigationDropdown =
-                                        !showingNavigationDropdown
-                                "
-                                class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none"
-                            >
-                                <svg
-                                    class="h-6 w-6"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        :class="{
-                                            hidden: showingNavigationDropdown,
-                                            'inline-flex':
-                                                !showingNavigationDropdown,
-                                        }"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                    <path
-                                        :class="{
-                                            hidden: !showingNavigationDropdown,
-                                            'inline-flex':
-                                                showingNavigationDropdown,
-                                        }"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            <!-- Grupo Torneo -->
+            <div>
+              <h3 class="text-red-500 uppercase font-semibold mb-2 border-b border-red-600 pb-1">
+                Torneo
+              </h3>
 
-                <!-- Responsive Navigation Menu -->
-                <div
-                    :class="{
-                        block: showingNavigationDropdown,
-                        hidden: !showingNavigationDropdown,
-                    }"
-                    class="sm:hidden"
-                >
-                    <div class="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            :href="route('dashboard')"
-                            :active="route().current('dashboard')"
-                        >
-                            Dashboard
-                        </ResponsiveNavLink>
-                    </div>
+              <NavLink
+                :href="route('admin.temporadas.index')"
+                :active="route().current('admin.temporadas.index')"
+                v-if="user?.role === 'administrador'"
+                class="block text-white hover:text-red-500 mb-1"
+                active-class="bg-gray-900 text-red-500 rounded-md px-3 py-2"
+              >
+                Temporadas
+              </NavLink>
 
-                    <!-- Responsive Settings Options -->
-                    <div
-                        class="border-t border-gray-200 pb-1 pt-4"
-                    >
-                        <div class="px-4">
-                            <div
-                                class="text-base font-medium text-gray-800"
-                            >
-                                {{ $page.props.auth.user.name }}
-                            </div>
-                            <div class="text-sm font-medium text-gray-500">
-                                {{ $page.props.auth.user.email }}
-                            </div>
-                        </div>
+              <NavLink
+                :href="route('admin.competencias.index')"
+                :active="route().current('admin.competencias.index')"
+                v-if="user?.role === 'administrador'"
+                class="block text-white hover:text-red-500 mb-1"
+                active-class="bg-gray-900 text-red-500 rounded-md px-3 py-2"
+              >
+                Competencias
+              </NavLink>
 
-                        <div class="mt-3 space-y-1">
-                            <ResponsiveNavLink :href="route('profile.edit')">
-                                Profile
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                :href="route('logout')"
-                                method="post"
-                                as="button"
-                            >
-                                Log Out
-                            </ResponsiveNavLink>
-                        </div>
-                    </div>
-                </div>
-            </nav>
+              <NavLink
+                :href="route('admin.temporada-competencias.index')"
+                :active="route().current('admin.temporada-competencias.index')"
+                v-if="user?.role === 'administrador'"
+                class="block text-white hover:text-red-500 mb-1"
+                active-class="bg-gray-900 text-red-500 rounded-md px-3 py-2"
+              >
+                Temporada Competencia
+              </NavLink>
 
-            <!-- Page Heading -->
-            <header
-                class="bg-white shadow"
-                v-if="$slots.header"
-            >
-                <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                    <slot name="header" />
-                </div>
-            </header>
+              <NavLink
+                :href="route('admin.calendarios.index')"
+                :active="route().current('admin.calendarios.index')"
+                v-if="user?.role === 'administrador'"
+                class="block text-white hover:text-red-500"
+                active-class="bg-gray-900 text-red-500 rounded-md px-3 py-2"
+              >
+                Calendario
+              </NavLink>
+            </div>
+          </div>
+        </transition>
+      </div>
+    </template>
 
-            <!-- Page Content -->
-            <main>
-                <slot />
-            </main>
-        </div>
-    </div>
+    <template #default>
+      <slot />
+    </template>
+  </AppLayout>
 </template>
+
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
