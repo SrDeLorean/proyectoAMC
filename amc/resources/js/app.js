@@ -9,6 +9,7 @@ import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 axios.defaults.baseURL = window.location.origin
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

@@ -13,7 +13,7 @@ class CreateEstadisticaEquiposTable extends Migration
 
             $table->foreignId('id_equipo')->constrained('equipos')->onDelete('cascade');
             $table->foreignId('id_calendario')->constrained('calendarios')->onDelete('cascade');
-            $table->foreignId('id_temporadaCompetencia')->constrained('temporada_competencias')->onDelete('cascade');
+            $table->foreignId('id_temporadacompetencia')->constrained('temporada_competencias')->onDelete('cascade');
 
             // Estadísticas del equipo
             $table->unsignedTinyInteger('posesion')->nullable();                    // Porcentaje de posesión

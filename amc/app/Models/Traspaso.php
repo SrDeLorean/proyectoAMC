@@ -35,4 +35,9 @@ class Traspaso extends Model
     {
         return $this->belongsTo(Equipo::class, 'id_equipo_destino');
     }
+
+    public function temporadaCompetencia()
+    {
+        return $this->belongsTo(TemporadaCompetencia::class, 'id_temporadacompetencia');
+    }
 }

@@ -21,6 +21,12 @@ class Calendario extends Model
         'jornada',
         'fecha',
         'hora',
+        'foto_rendimiento_local',
+        'foto_lista_id_local',
+        'foto_rendimiento_jugadores_local',
+        'foto_rendimiento_visitante',
+        'foto_lista_id_visitante',
+        'foto_rendimiento_jugadores_visitante',
     ];
 
     public function temporadaCompetencia()
@@ -36,5 +42,15 @@ class Calendario extends Model
     public function equipoVisitante()
     {
         return $this->belongsTo(Equipo::class, 'id_equipo_visitante');
+    }
+
+    public function estadisticasJugadores()
+    {
+        return $this->hasMany(EstadisticaJugador::class, 'id_calendario');
+    }
+
+    public function estadisticasEquipos()
+    {
+        return $this->hasMany(EstadisticaEquipo::class, 'id_calendario');
     }
 }

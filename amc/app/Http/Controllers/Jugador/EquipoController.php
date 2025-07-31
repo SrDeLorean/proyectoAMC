@@ -31,11 +31,21 @@ class EquipoController extends Controller
     {
         $user = auth()->user();
 
-        // Obtener el primer equipo del usuario (si tiene varios, ajusta según necesites)
+        // Obtener el primer equipo del usuario (si tiene varios)
         $equipo = $user->equipos()->first();
 
+        // Si no tiene equipo, retornar una respuesta adecuada
+        if (!$equipo) {
+            return Inertia::render('Jugador/Equipos/Index', [
+                'jugador' => $user,
+                'equipo' => null,
+                'plantilla' => [],
+                'mensaje' => 'Aún no estás asignado a ningún equipo.',
+            ]);
+        }
+
         // Obtener la plantilla asociada al equipo
-        $plantilla = Plantilla::with('jugador') // si tienes relación con modelo Jugador
+        $plantilla = Plantilla::with('jugador')
                             ->where('equipo_id', $equipo->id)
                             ->get();
 
@@ -45,5 +55,6 @@ class EquipoController extends Controller
             'plantilla' => $plantilla,
         ]);
     }
+
 
 }

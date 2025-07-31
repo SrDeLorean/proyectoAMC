@@ -44,6 +44,17 @@ import NavLink from '@/Components/NavLink.vue'
         >
             Plantillas
         </NavLink>
+
+        <NavLink
+            :href="route('entrenador.competencias.index')"
+            :active="route().current('entrenador.competencias.index') || route().current('entrenador.plantillas.*')"
+            class="text-white hover:text-red-500"
+            active-class="text-red-500 underline"
+        >
+            Competencia
+        </NavLink>
+
+
         </nav>
 
     </template>

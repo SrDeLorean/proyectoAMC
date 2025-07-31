@@ -18,6 +18,17 @@ class User extends Authenticatable
         'password',
         'role',
         'foto',
+        'nacionalidad',
+        'posicion',
+        'fecha_nacimiento',
+        'altura',
+        'peso',
+        'telefono',
+        'instagram',
+        'facebook',
+        'twitch',
+        'youtube',
+        'tiktok',
     ];
 
     protected $hidden = [
@@ -25,35 +36,36 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'deleted_at'        => 'datetime',  // Cast para soft deletes
+        'password'          => 'hashed',
+        'fecha_nacimiento'  => 'date',      // Si quieres tratarla como fecha
+    ];
+
     // Equipos donde el usuario es propietario
     public function equipos()
     {
-        return $this->hasMany(Equipo::class, 'id_usuario');
+        return $this->hasMany(\App\Models\Equipo::class, 'id_usuario');
     }
 
     // Equipos donde el usuario es entrenador
     public function equiposComoEntrenador()
     {
-        return $this->hasMany(Equipo::class, 'id_usuario2');
+        return $this->hasMany(\App\Models\Equipo::class, 'id_usuario2');
     }
-
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'deleted_at' => 'datetime',  // Cast para soft deletes
-        'password' => 'hashed',
-    ];
 
     public function getProfilePhotoUrlAttribute()
     {
-        return $this->profile_photo_path
-            ? asset('storage/' . $this->profile_photo_path)
-            : asset('storage/images/users/default-user.png');
+        return $this->foto && $this->foto !== 'images/users/default-user.png'
+            ? asset($this->foto)
+            : asset('images/users/default-user.png');
     }
 
     public function plantillaActual()
     {
         return $this->hasOne(\App\Models\TemporadaPlantilla::class, 'id_jugador')
-            ->whereNull('fecha_salida'); // Asegúrate de que esta lógica coincida con la tuya
+            ->whereNull('fecha_salida'); // Asegúrate que esta lógica coincide con tu aplicación
     }
 
     public function plantilla()

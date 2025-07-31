@@ -18,6 +18,16 @@ class CreateCalendariosTable extends Migration
             $table->date('fecha')->nullable();
             $table->time('hora')->nullable();
             $table->string('jornada')->nullable();
+
+            //se vana subir 3 fotos, rendimiendo del partido, lista de ID del partido, rendimiento de los jugadores
+            $table->string('foto_rendimiento_local')->nullable();
+            $table->string('foto_lista_id_local')->nullable();
+            $table->string('foto_rendimiento_jugadores_local')->nullable();
+
+            //se vana subir 3 fotos, rendimiendo del partido, lista de ID del partido, rendimiento de los jugadores
+            $table->string('foto_rendimiento_visitante')->nullable();
+            $table->string('foto_lista_id_visitante')->nullable();
+            $table->string('foto_rendimiento_jugadores_visitante')->nullable();
             $table->timestamps();
             $table->softDeletes(); // para borrado lógico
         });

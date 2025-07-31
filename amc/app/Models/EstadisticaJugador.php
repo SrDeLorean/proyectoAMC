@@ -20,7 +20,7 @@ class EstadisticaJugador extends Model
         'id_jugador',
         'id_equipo',
         'id_calendario',
-        'id_temporada_competencia',
+        'id_temporadacompetencia',
         'posicion',
         'nombre',
         'calificacion',
@@ -61,6 +61,6 @@ class EstadisticaJugador extends Model
 
     public function temporadaCompetencia()
     {
-        return $this->belongsTo(TemporadaCompetencia::class, 'id_temporada_competencia');
+        return $this->belongsTo(TemporadaCompetencia::class, 'id_temporadacompetencia');
     }
 }

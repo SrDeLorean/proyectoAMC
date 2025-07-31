@@ -38,9 +38,8 @@ class CompetenciaController extends Controller
 
         $temporadaCompetenciaId = $temporadaCompetencia['id'] ?? null;
 
-        $equipos = $temporadaCompetenciaId
-            ? TemporadaCompetencia::find($temporadaCompetenciaId)->equipos()->with('equipo')->get()->toArray()
-            : [];
+        $equipos = TemporadaCompetencia::find($temporadaCompetenciaId)->equipos()->get()->toArray();
+
 
         $tablaClasificacion = $temporadaCompetenciaId
             ? TemporadaEquipo::with('equipo')

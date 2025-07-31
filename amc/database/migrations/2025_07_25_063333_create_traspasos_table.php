@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('traspasos', function (Blueprint $table) {
             $table->id();
-
+            $table->unsignedBigInteger('id_temporadacompetencia')->nullable();
             $table->foreignId('id_jugador')->constrained('users')->onDelete('cascade');
             $table->foreignId('id_equipo_origen')->nullable()->constrained('equipos')->onDelete('set null');
             $table->foreignId('id_equipo_destino')->constrained('equipos')->onDelete('cascade');
@@ -24,6 +24,9 @@ return new class extends Migration {
 
             $table->timestamps();
             $table->softDeletes();
+
+            // Foreign key para id_temporadacompetencia
+            $table->foreign('id_temporadacompetencia')->references('id')->on('temporada_competencias')->onDelete('cascade');
         });
     }
 

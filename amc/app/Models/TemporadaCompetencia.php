@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class TemporadaCompetencia extends Model
 {
@@ -35,6 +34,10 @@ class TemporadaCompetencia extends Model
     ];
 
     // Relaciones
+    public function equipos()
+    {
+        return $this->belongsToMany(Equipo::class, 'temporada_equipos', 'id_temporadacompetencia', 'id_equipo');
+    }
 
     public function temporadaEquipos()
     {
@@ -53,7 +56,18 @@ class TemporadaCompetencia extends Model
 
     public function estadisticaEquipos()
     {
-        return $this->hasMany(EstadisticaEquipo::class, 'temporadaCompetencia_id');
+        return $this->hasMany(EstadisticaEquipo::class, 'id_temporadacompetencia');
+    }
+
+    public function estadisticaJugadores()
+    {
+        return $this->hasMany(EstadisticaJugador::class, 'id_temporadacompetencia');
+    }
+
+    public function traspasos()
+    {
+        // RELACIÓN CORREGIDA: usa 'id_temporadacompetencia' como clave foránea
+        return $this->hasMany(Traspaso::class, 'id_temporadacompetencia');
     }
 
     public function competencia()
@@ -61,88 +75,63 @@ class TemporadaCompetencia extends Model
         return $this->belongsTo(Competencia::class, 'id_competencia');
     }
 
-    public function estadisticaJugadores()
-    {
-        return $this->hasMany(EstadisticaJugador::class, 'id_temporadaCompetencia');
-    }
-
-    public function traspasos()
-    {
-        return $this->hasMany(Traspaso::class, 'id_temporada_competencia');
-    }
-
-    /**
-     * Comprueba si el periodo de fichajes está abierto actualmente.
-     *
-     * @return bool
-     */
     public function fichajesAbiertos(): bool
     {
-        if (!$this->fichajes_abiertos) {
-            return false;
-        }
+        if (!$this->fichajes_abiertos) return false;
 
         $now = now();
 
-        if ($this->fichajes_inicio && $now->lt($this->fichajes_inicio)) {
-            return false;
-        }
-
-        if ($this->fichajes_fin && $now->gt($this->fichajes_fin)) {
-            return false;
-        }
+        if ($this->fichajes_inicio && $now->lt($this->fichajes_inicio)) return false;
+        if ($this->fichajes_fin && $now->gt($this->fichajes_fin)) return false;
 
         return true;
     }
 
-    // Eventos para cascada soft delete y restore
-
+    // Cascada SoftDelete y Restore
     protected static function booted()
     {
-        static::deleting(function ($temporadaCompetencia) {
-            if ($temporadaCompetencia->isForceDeleting()) {
-                $temporadaCompetencia->temporadaEquipos()->withTrashed()->forceDelete();
-                $temporadaCompetencia->calendarios()->withTrashed()->forceDelete();
-                $temporadaCompetencia->estadisticaEquipos()->withTrashed()->forceDelete();
-                $temporadaCompetencia->estadisticaJugadores()->withTrashed()->forceDelete();
-                $temporadaCompetencia->traspasos()->withTrashed()->forceDelete();
+        static::deleting(function ($tc) {
+            if ($tc->isForceDeleting()) {
+                $tc->temporadaEquipos()->withTrashed()->forceDelete();
+                $tc->calendarios()->withTrashed()->forceDelete();
+                $tc->estadisticaEquipos()->withTrashed()->forceDelete();
+                $tc->estadisticaJugadores()->withTrashed()->forceDelete();
+                $tc->traspasos()->withTrashed()->forceDelete();
 
-                foreach ($temporadaCompetencia->temporadaEquipos()->withTrashed()->get() as $temporadaEquipo) {
-                    $temporadaEquipo->temporadaPlantillas()->withTrashed()->forceDelete();
+                foreach ($tc->temporadaEquipos()->withTrashed()->get() as $te) {
+                    $te->temporadaPlantillas()->withTrashed()->forceDelete();
                 }
             } else {
-                $temporadaCompetencia->temporadaEquipos()->get()->each->delete();
-                $temporadaCompetencia->calendarios()->get()->each->delete();
-                $temporadaCompetencia->estadisticaEquipos()->get()->each->delete();
-                $temporadaCompetencia->estadisticaJugadores()->get()->each->delete();
-                $temporadaCompetencia->traspasos()->get()->each->delete();
+                $tc->temporadaEquipos->each->delete();
+                $tc->calendarios->each->delete();
+                $tc->estadisticaEquipos->each->delete();
+                $tc->estadisticaJugadores->each->delete();
+                $tc->traspasos->each->delete();
 
-                foreach ($temporadaCompetencia->temporadaEquipos as $temporadaEquipo) {
-                    $temporadaEquipo->temporadaPlantillas()->get()->each->delete();
+                foreach ($tc->temporadaEquipos as $te) {
+                    $te->temporadaPlantillas->each->delete();
                 }
             }
         });
 
-        static::restoring(function ($temporadaCompetencia) {
-            $temporadaCompetencia->temporadaEquipos()->onlyTrashed()->get()->each->restore();
-            $temporadaCompetencia->calendarios()->onlyTrashed()->get()->each->restore();
-            $temporadaCompetencia->estadisticaEquipos()->onlyTrashed()->get()->each->restore();
-            $temporadaCompetencia->estadisticaJugadores()->onlyTrashed()->get()->each->restore();
-            $temporadaCompetencia->traspasos()->onlyTrashed()->get()->each->restore();
+        static::restoring(function ($tc) {
+            $tc->temporadaEquipos()->onlyTrashed()->get()->each->restore();
+            $tc->calendarios()->onlyTrashed()->get()->each->restore();
+            $tc->estadisticaEquipos()->onlyTrashed()->get()->each->restore();
+            $tc->estadisticaJugadores()->onlyTrashed()->get()->each->restore();
+            $tc->traspasos()->onlyTrashed()->get()->each->restore();
 
-            foreach ($temporadaCompetencia->temporadaEquipos()->onlyTrashed()->get() as $temporadaEquipo) {
-                $temporadaEquipo->temporadaPlantillas()->onlyTrashed()->get()->each->restore();
+            foreach ($tc->temporadaEquipos()->onlyTrashed()->get() as $te) {
+                $te->temporadaPlantillas()->onlyTrashed()->get()->each->restore();
             }
         });
     }
 
+    // Utilidad para buscar activa por equipo
     protected function obtenerTemporadaCompetenciaActiva($id_equipo)
     {
-        // Busca temporada_competencia que esté activa (no borrada) y relacionada al equipo
-        $temporadaCompetencia = TemporadaCompetencia::where('id_equipo', $id_equipo)
-            ->whereNull('deleted_at') // softdelete
-            ->first();
-
-        return $temporadaCompetencia ? $temporadaCompetencia->id : null;
+        return self::where('id_equipo', $id_equipo)
+            ->whereNull('deleted_at')
+            ->value('id');
     }
 }

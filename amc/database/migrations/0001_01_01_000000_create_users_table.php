@@ -20,6 +20,17 @@ return new class extends Migration
             $table->string('password');
             $table->enum('role', ['jugador', 'entrenador', 'administrador'])->default('jugador');
             $table->string('foto')->default('images/users/default-user.png'); // Ruta por defecto
+            $table->string('nacionalidad')->nullable();
+            $table->string('posicion')->nullable();
+            $table->string('fecha_nacimiento')->nullable();
+            $table->string('altura')->nullable();
+            $table->string('peso')->nullable();
+            $table->string('telefono')->nullable();
+            $table->string('instagram')->nullable();
+            $table->string('facebook')->nullable();
+            $table->string('twitch')->nullable();
+            $table->string('youtube')->nullable();
+            $table->string('tiktok')->nullable();
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();  // <-- aquí

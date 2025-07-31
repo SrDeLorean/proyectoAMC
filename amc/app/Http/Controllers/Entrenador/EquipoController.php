@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Entrenador;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Plantilla;
 use App\Models\Equipo;
 use Illuminate\Support\Facades\Auth;
@@ -15,11 +14,16 @@ class EquipoController extends Controller
     {
         $user = Auth::user();
 
-        // Buscar el primer equipo donde es entrenador
-        $equipo = $user->equiposComoEntrenador()->with('formacion')->first();
+        // Buscar el primer equipo donde el usuario es propietario o entrenador
+        $equipo = Equipo::with('formacion')
+                    ->where(function ($query) use ($user) {
+                        $query->where('id_usuario', $user->id)
+                              ->orWhere('id_usuario2', $user->id);
+                    })
+                    ->first();
 
         if (!$equipo) {
-            // Si no tiene equipo, redireccionamos o mostramos vista vacía
+            // Si no tiene equipo, vista vacía
             return Inertia::render('Entrenador/Equipos/Index', [
                 'equipo' => null,
                 'plantilla' => [],
@@ -27,7 +31,7 @@ class EquipoController extends Controller
             ]);
         }
 
-        // Obtener plantilla del equipo con datos del jugador relacionados
+        // Obtener la plantilla con el jugador relacionado
         $plantilla = Plantilla::with('jugador')
                         ->where('id_equipo', $equipo->id)
                         ->get();
@@ -38,6 +42,4 @@ class EquipoController extends Controller
             'jugador' => $user,
         ]);
     }
-
-
 }

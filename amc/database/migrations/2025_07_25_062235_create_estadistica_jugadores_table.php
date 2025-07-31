@@ -15,7 +15,7 @@ class CreateEstadisticaJugadoresTable extends Migration
             $table->foreignId('id_jugador')->constrained('users')->onDelete('cascade');
             $table->foreignId('id_equipo')->constrained('equipos')->onDelete('cascade');
             $table->foreignId('id_calendario')->constrained('calendarios')->onDelete('cascade');
-            $table->foreignId('id_temporada_competencia')->constrained('temporada_competencias')->onDelete('cascade');
+            $table->foreignId('id_temporadacompetencia')->constrained('temporada_competencias')->onDelete('cascade');
 
             // Datos del jugador
             $table->string('posicion')->nullable();
