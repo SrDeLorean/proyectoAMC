@@ -12,61 +12,66 @@ use App\Models\Equipo;
 class CompetenciaController extends Controller
 {
     public function index()
-{
-    $usuario = Auth::user();
+    {
+        $usuario = Auth::user();
 
-    // Buscar el equipo donde el usuario es propietario o entrenador
-    $equipo = Equipo::where(function ($q) use ($usuario) {
-        $q->where('id_usuario', $usuario->id)
-          ->orWhere('id_usuario2', $usuario->id);
-    })->first();
+        // Buscar el equipo donde el usuario es propietario o entrenador
+        $equipo = Equipo::where(function ($q) use ($usuario) {
+            $q->where('id_usuario', $usuario->id)
+              ->orWhere('id_usuario2', $usuario->id);
+        })->first();
 
-    // Si no tiene equipo asignado, retornar sin resultados
-    if (!$equipo) {
+        // Si no tiene equipo asignado, retornar sin resultados
+        if (!$equipo) {
+            return Inertia::render('Entrenador/Competencias/Index', [
+                'activos' => [],
+                'inactivos' => [],
+            ]);
+        }
+
+        // Obtener competencias activas del equipo
+        $activos = TemporadaEquipo::with([
+                'temporadaCompetencia.competencia',
+                'temporadaCompetencia.temporada',
+            ])
+            ->where('id_equipo', $equipo->id)
+            ->whereNull('deleted_at')
+            ->whereHas('temporadaCompetencia', function ($q) {
+                $q->whereNull('deleted_at');
+            })
+            ->get();
+
+        // Obtener competencias inactivas del equipo
+        $inactivos = TemporadaEquipo::withTrashed()
+            ->with([
+                'temporadaCompetencia' => function ($q) {
+                    $q->withTrashed()->with(['competencia', 'temporada']);
+                }
+            ])
+            ->where('id_equipo', $equipo->id)
+            ->where(function ($query) {
+                $query->whereNotNull('deleted_at') // Eliminado en temporada_equipos
+                      ->orWhereHas('temporadaCompetencia', function ($q) {
+                          $q->onlyTrashed(); // Eliminado en temporada_competencias
+                      });
+            })
+            ->get();
+
         return Inertia::render('Entrenador/Competencias/Index', [
-            'activos' => [],
-            'inactivos' => [],
+            'activos' => $activos,
+            'inactivos' => $inactivos,
         ]);
     }
-
-    // Obtener competencias activas del equipo
-    $activos = TemporadaEquipo::with([
-            'temporadaCompetencia.competencia',
-            'temporadaCompetencia.temporada',
-        ])
-        ->where('id_equipo', $equipo->id)
-        ->whereNull('deleted_at')
-        ->whereHas('temporadaCompetencia', function ($q) {
-            $q->whereNull('deleted_at');
-        })
-        ->get();
-
-    // Obtener competencias inactivas del equipo
-    $inactivos = TemporadaEquipo::withTrashed()
-        ->with([
-            'temporadaCompetencia' => function ($q) {
-                $q->withTrashed()->with(['competencia', 'temporada']);
-            }
-        ])
-        ->where('id_equipo', $equipo->id)
-        ->where(function ($query) {
-            $query->whereNotNull('deleted_at') // Eliminado en temporada_equipos
-                  ->orWhereHas('temporadaCompetencia', function ($q) {
-                      $q->onlyTrashed(); // Eliminado en temporada_competencias
-                  });
-        })
-        ->get();
-
-    return Inertia::render('Entrenador/Competencias/Index', [
-        'activos' => $activos,
-        'inactivos' => $inactivos,
-    ]);
-}
-
 
     public function show($id)
     {
         $usuario = Auth::user();
+
+        // Obtener IDs de equipos donde el usuario es dueño o entrenador
+        $equiposIds = Equipo::where(function ($q) use ($usuario) {
+            $q->where('id_usuario', $usuario->id)
+              ->orWhere('id_usuario2', $usuario->id);
+        })->pluck('id')->toArray();
 
         $temporadaEquipo = TemporadaEquipo::withTrashed()
             ->with([
@@ -78,7 +83,7 @@ class CompetenciaController extends Controller
                 }
             ])
             ->where('id', $id)
-            ->whereIn('id_equipo', $usuario->equiposComoEntrenador()->pluck('id'))
+            ->whereIn('id_equipo', $equiposIds)
             ->firstOrFail();
 
         $competencia = optional($temporadaEquipo->temporadaCompetencia->competencia);

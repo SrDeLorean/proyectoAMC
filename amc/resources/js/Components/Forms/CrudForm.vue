@@ -94,23 +94,44 @@ function onSubmit() {
   >
     <!-- Campos tipo file -->
     <template v-for="field in safeFields.filter(f => f.type === 'file')" :key="field.name">
+      <div v-if="field.readonly || field.viewOnly" class="mb-4">
+        <label class="block font-semibold mb-1">{{ field.label || field.name }}</label>
+        <!-- Mostrar imagen si existe, sino texto "Sin archivo" -->
+        <img
+          v-if="imagePreviews[field.name]"
+          :src="imagePreviews[field.name]"
+          alt="Preview"
+          class="max-w-xs rounded"
+        />
+        <div v-else class="italic text-gray-400">Sin archivo</div>
+      </div>
       <FormFieldFile
+        v-else
         :field="field"
         :initialValue="imagePreviews[field.name]"
         :modelValue="modelGet(field.name)"
         :error="props.form.errors[field.name]"
+        :disabled="field.disabled || false"
         @update:modelValue="file => onFileChange(field.name, file)"
       />
     </template>
 
     <!-- Otros campos -->
     <template v-for="field in safeFields.filter(f => f.type !== 'file')" :key="field.name">
+      <div v-if="field.readonly || field.viewOnly" class="mb-4">
+        <label class="block font-semibold mb-1">{{ field.label || field.name }}</label>
+        <div class="p-2 bg-gray-700 rounded text-white whitespace-pre-wrap">
+          {{ modelGet(field.name) ?? '-' }}
+        </div>
+      </div>
+
       <FormFieldSelect
-        v-if="field.type === 'select'"
+        v-else-if="field.type === 'select'"
         :field="field"
         :modelValue="modelGet(field.name)"
         :error="props.form.errors[field.name]"
         :selectOptions="props.selectOptions"
+        :disabled="field.disabled || false"
         @update:modelValue="val => modelSet(field.name, val)"
       />
       <FormFieldTextarea
@@ -118,6 +139,7 @@ function onSubmit() {
         :field="field"
         :modelValue="modelGet(field.name)"
         :error="props.form.errors[field.name]"
+        :disabled="field.disabled || false"
         @update:modelValue="val => modelSet(field.name, val)"
       />
       <FormFieldColor
@@ -125,13 +147,24 @@ function onSubmit() {
         :field="field"
         :modelValue="modelGet(field.name)"
         :error="props.form.errors[field.name]"
+        :disabled="field.disabled || false"
         @update:modelValue="val => modelSet(field.name, val)"
       />
+      <FormFieldInput
+        v-else-if="field.type === 'boolean'"
+        :field="field"
+        type="checkbox"
+        :modelValue="!!modelGet(field.name)"
+        :error="props.form.errors[field.name]"
+        :disabled="field.disabled || false"
+        @update:modelValue="val => modelSet(field.name, val)"
+        />
       <FormFieldInput
         v-else
         :field="field"
         :modelValue="modelGet(field.name)"
         :error="props.form.errors[field.name]"
+        :disabled="field.disabled || false"
         @update:modelValue="val => modelSet(field.name, val)"
       />
     </template>

@@ -12,7 +12,7 @@ class EquipoSuccessorsSeeder extends Seeder
 {
     public function run(): void
     {
-        $formacion = Formacion::firstOrCreate(['nombre' => '3 4 2 1']);
+        $formacion = Formacion::firstOrCreate(['nombre' => '3-5-2']);
 
         $dueno = User::firstOrCreate(
             ['id_ea' => 'Srdelorean'],
@@ -38,12 +38,11 @@ class EquipoSuccessorsSeeder extends Seeder
 
         $logoNombre = strtolower("Successors");
         $logoNombre = str_replace([' ', 'á', 'é', 'í', 'ó', 'ú', 'ñ', 'ü', 'ç'], ['_', 'a', 'e', 'i', 'o', 'u', 'n', 'u', 'c'], $logoNombre);
-        $logoNombre = preg_replace('/[^a-z0-9_]/', '', $logoNombre); // elimina caracteres no alfanuméricos ni guiones bajos
+        $logoNombre = preg_replace('/[^a-z0-9_]/', '', $logoNombre);
 
         $coloresHex = [
             'azul' => '#0000FF',
             'negro' => '#000000',
-            // ...otros colores que uses
         ];
 
         $colorPrimario = 'azul';
@@ -60,22 +59,24 @@ class EquipoSuccessorsSeeder extends Seeder
         ]);
 
         $jugadores = [
-            [10, 'Srdelorean', 'Delantero', 'DC'],
-            [99, 'JorgitoDeus', 'Mediocampista', 'MI'],
-            [19, 'Sepu_19', 'Delantero', 'DC'],
-            [9, 'Tommy_Shelby', 'Delantero', 'DC'],
-            [8, 'YayaaToure', 'Mediocampista', 'MCD'],
-            [14, 'Ezf14k', 'Mediocampista', 'MD'],
-            [32, 'Ludn1ck', 'Mediocampista', 'MCD'],
-            [5, 'Chonpapii', 'Mediocampista', 'MCD'],
-            [27, 'Jonchiko9309', 'Mediocampista', 'MCD'],
-            [4, 'tiomayas', 'Mediocampista', 'MI'],
-            [69, 'Hacele1', 'Defensa', 'DFC'],
-            [91, 'Danger91', 'Defensa', 'DFC'],
+            [1, 'Kenji-Requidem', 'Portero', 'PO'],
+            [69, 'Hacele1', 'Defensa', 'DFD'],
             [22, 'Cazueela', 'Defensa', 'DFC'],
-            [44, 'Cl_Crow_Cl', 'Defensa', 'DFC'],
-            [1, 'Kenji-Requidem', 'Portero', 'POR'],
-            [65, 'mati_uru', 'Portero', 'POR'],
+            [44, 'Cl_Crow_Cl', 'Defensa', 'DFI'],
+            [99, 'JorgitoDeus', 'Mediocampista', 'MD'],
+            [14, 'Ezf14k', 'Mediocampista', 'MI'],
+            [5, 'Chonpapii', 'Mediocampista', 'MCD'],
+            [8, 'YayaaToure', 'Mediocampista', 'MCI'],
+            [27, 'Jonchiko9309', 'Mediocampista', 'MCR'],
+            [10, 'Srdelorean', 'Delantero', 'DI'],
+            [19, 'Sepu_19', 'Delantero', 'DD'],
+
+            // Suplentes (sin posición exacta en formación)
+            [9, 'Tommy_Shelby', 'Delantero', 'DD'],
+            [91, 'Danger91', 'Defensa', 'DFD'],
+            [32, 'Ludn1ck', 'Mediocampista', 'MCD'],
+            [4, 'tiomayas', 'Mediocampista', 'MI'],
+            [65, 'mati_uru', 'Portero', 'PO'],
             [17, 'acicalado', 'Mediocampista', 'MD'],
         ];
 

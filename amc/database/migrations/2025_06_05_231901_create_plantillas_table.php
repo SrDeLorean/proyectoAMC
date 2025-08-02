@@ -15,6 +15,8 @@ class CreatePlantillasTable extends Migration
             $table->string('rol');
             $table->string('posicion');
             $table->integer('numero');
+            // campo de si es titular  o suplente
+            $table->boolean('titular')->default(false);
             $table->timestamps();
             $table->softDeletes(); // para soft delete
         });

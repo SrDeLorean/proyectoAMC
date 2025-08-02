@@ -15,6 +15,7 @@ class Plantilla extends Model
         'rol',
         'posicion',
         'numero',
+        'titular',
     ];
 
     // Relaciones que se cargarán automáticamente

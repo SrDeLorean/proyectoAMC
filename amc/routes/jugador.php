@@ -10,6 +10,7 @@ use App\Http\Controllers\Jugador\TraspasoController;
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->name('dashboard');
 
+
 Route::get('/equipos', [EquipoController::class, 'index'])
     ->name('equipos.index');
 

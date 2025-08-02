@@ -7,10 +7,14 @@ use App\Models\EstadisticaJugador;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
+use App\Models\Equipo;
+use App\Models\Plantilla;
+use App\Models\User;
+
 class DashboardController extends Controller
 {
     /**
-     * Muestra el dashboard del jugador con sus datos y estadísticas agrupadas.
+     * Muestra los datos del entrenador y resumen de estadísticas de sus jugadores.
      *
      * @return \Inertia\Response
      */
@@ -18,34 +22,61 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        // Obtener estadísticas del jugador con relaciones cargadas
-        $estadisticas = EstadisticaJugador::with([
-            'temporadaCompetencia.temporada',
-            'temporadaCompetencia.competencia'
-        ])
-        ->where('id_jugador', $user->id)
-        ->get()
-        ->groupBy(function ($estadistica) {
-            return optional($estadistica->temporadaCompetencia)->id;
-        })
-        ->map(function ($items) {
-            $primera = $items->first();
+        // Buscar el primer equipo donde el usuario es propietario o entrenador
+        $equipo = Equipo::with(['formacion', 'propietario', 'entrenador'])
+                    ->where(function ($query) use ($user) {
+                        $query->where('id_usuario', $user->id)
+                            ->orWhere('id_usuario2', $user->id);
+                    })
+                    ->first();
 
-            return [
-                'temporada_competencia_id' => $primera->temporadaCompetencia->id ?? null,
-                'temporada' => $primera->temporadaCompetencia->temporada->nombre ?? 'Sin temporada',
-                'competencia' => $primera->temporadaCompetencia->competencia->nombre ?? 'Sin competencia',
-                'partidos_jugados' => $items->count(),
-                'goles' => $items->sum('goles'),
-                'asistencias' => $items->sum('asistencias'),
-                'minutos_jugados' => $items->sum('minutos_jugados_vs_equipo'),
-                'calificacion_promedio' => round($items->avg('calificacion'), 2),
-                // Puedes agregar más métricas aquí si deseas
-            ];
-        })->values(); // resetea las claves
+        if (!$equipo) {
+            return Inertia::render('Entrenador/Equipos/Index', [
+                'equipo' => null,
+                'plantilla' => [],
+                'jugador' => $user,
+            ]);
+        }
 
-        return Inertia::render('Jugador/Dashboard', [
-            'user' => $user->makeHidden(['password', 'remember_token']),
+        // Obtener la plantilla con el jugador relacionado
+        $plantilla = Plantilla::with('jugador')
+                        ->where('id_equipo', $equipo->id)
+                        ->get();
+
+        // Formatear URLs de redes sociales para evitar enviar links inválidos
+        $equipo->instagram = $equipo->instagram ? 'https://instagram.com/' . ltrim($equipo->instagram, '@') : null;
+        $equipo->twitch = $equipo->twitch ? 'https://twitch.tv/' . ltrim($equipo->twitch, '@') : null;
+        $equipo->youtube = $equipo->youtube ? 'https://youtube.com/' . ltrim($equipo->youtube, '@') : null;
+
+        return Inertia::render('Jugador/Equipos/Index', [
+            'equipo' => $equipo,
+            'plantilla' => $plantilla,
+            'jugador' => $user,
+        ]);
+    }
+
+    public function show(User $user)
+    {
+        $plantilla = $user->plantillaActual()->with('equipo')->first();
+
+        if (!$plantilla) {
+            $plantilla = $user->plantilla()->with('equipo')->first();
+        }
+
+        $estadisticas = EstadisticaJugador::with(['temporadaCompetencia.competencia'])
+            ->where('id_jugador', $user->id)
+            ->get();
+
+        // Convierte logo a url absoluta con asset()
+        $equipo = $plantilla ? $plantilla->equipo : null;
+        if ($equipo && $equipo->logo && !str_starts_with($equipo->logo, 'http')) {
+            $equipo->logo = asset($equipo->logo);
+        }
+
+        return Inertia::render('Jugador/Dashboard/Show', [
+            'user' => $user->append('profile_photo_url')->makeHidden(['password', 'remember_token']),
+            'plantilla' => $plantilla,
+            'equipo' => $equipo,
             'estadisticas' => $estadisticas,
         ]);
     }

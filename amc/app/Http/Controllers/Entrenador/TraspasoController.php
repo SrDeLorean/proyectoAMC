@@ -15,8 +15,11 @@ class TraspasoController extends Controller
     {
         $user = Auth::user();
 
-        // Obtener equipos que controla el entrenador
-        $equipos = Equipo::where('id_usuario', $user->id)->pluck('id')->toArray();
+        // Equipos donde el usuario es dueño o entrenador
+        $equipos = Equipo::where(function ($query) use ($user) {
+            $query->where('id_usuario', $user->id)
+                  ->orWhere('id_usuario2', $user->id);
+        })->pluck('id')->toArray();
 
         $traspasos = Traspaso::with(['jugador', 'equipoOrigen', 'equipoDestino'])
             ->whereIn('id_equipo_destino', $equipos)
@@ -30,7 +33,11 @@ class TraspasoController extends Controller
     {
         $user = Auth::user();
 
-        $equipos = Equipo::where('id_usuario', $user->id)->get();
+        // Equipos donde el usuario es dueño o entrenador
+        $equipos = Equipo::where(function ($query) use ($user) {
+            $query->where('id_usuario', $user->id)
+                  ->orWhere('id_usuario2', $user->id);
+        })->get();
 
         $jugadores = User::where('role', 'jugador')
             ->with(['plantilla.equipo']) // ya trae datos desde Plantilla
@@ -60,8 +67,6 @@ class TraspasoController extends Controller
         ]);
     }
 
-
-
     public function store(Request $request)
     {
         $user = Auth::user();
@@ -73,9 +78,12 @@ class TraspasoController extends Controller
             'motivo' => 'nullable|string',
         ]);
 
-        // Validar que el equipo destino pertenece al entrenador
+        // Validar que el equipo destino pertenece al entrenador o dueño
         $equipoDestino = Equipo::where('id', $validated['id_destino'])
-            ->where('id_usuario', $user->id)
+            ->where(function ($query) use ($user) {
+                $query->where('id_usuario', $user->id)
+                      ->orWhere('id_usuario2', $user->id);
+            })
             ->firstOrFail();
 
         Traspaso::create([
@@ -90,5 +98,4 @@ class TraspasoController extends Controller
         return redirect()->route('entrenador.traspasos.index')
             ->with('success', 'Solicitud de traspaso creada correctamente.');
     }
-
 }
