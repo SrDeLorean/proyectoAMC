@@ -4,6 +4,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  colorEquipo: {
+    type: String,
+    default: '#dc2626', // rojo por defecto
+  },
 })
 
 // Función para mostrar valor o 'N/A' si es null, undefined o vacío
@@ -14,17 +18,27 @@ function mostrarValor(valor) {
 
 <template>
   <div
-    class="bg-gray-900 p-4 rounded-xl shadow-lg border border-red-600 max-w-full mx-auto overflow-x-auto"
+    class="bg-gray-900 p-4 rounded-xl shadow-lg max-w-full mx-auto overflow-x-auto"
     style="min-width: 320px"
+    :style="{ border: `1px solid ${colorEquipo}` }"
   >
-    <h2 class="text-red-600 text-xl font-bold mb-4 drop-shadow-[0_0_3px_#f00] whitespace-nowrap">
+    <h2
+      class="text-xl font-bold mb-4 whitespace-nowrap"
+      :style="{
+        color: colorEquipo,
+        textShadow: `0 0 3px ${colorEquipo}`
+      }"
+    >
       Estadísticas de Jugadores
     </h2>
 
     <template v-if="jugadores.length > 0">
-      <table class="min-w-full border-collapse border border-gray-700 text-white text-sm table-auto">
+      <table
+        class="min-w-full border-collapse border text-white text-sm table-auto"
+        :style="{ borderColor: colorEquipo }"
+      >
         <thead>
-          <tr class="bg-red-600">
+          <tr :style="{ backgroundColor: colorEquipo }" class="text-white">
             <th class="border border-gray-600 p-2 text-center min-w-[48px]">Foto</th>
             <th class="border border-gray-600 p-2 text-left min-w-[140px]">Jugador</th>
             <th class="border border-gray-600 p-2 text-left min-w-[80px]">Posición</th>

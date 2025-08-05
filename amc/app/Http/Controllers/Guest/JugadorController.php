@@ -6,19 +6,30 @@ use App\Http\Controllers\Controller;
 
 use Inertia\Inertia;
 use App\Models\User;
+use App\Models\Plantilla;
 
 class JugadorController extends Controller
 {
 
     public function index()
     {
-        $jugadores = User::with(['plantilla.equipo'])
-            ->where('role', 'jugador')
-            ->orderBy('name')
-            ->get();
+        $plantillas = Plantilla::with(['jugador', 'equipo'])->get();
+
+        // Agrupar y serializar como array asociativo plano
+        $agrupado = [];
+
+        foreach ($plantillas as $plantilla) {
+            $nombreEquipo = $plantilla->equipo->nombre ?? 'Libre';
+
+            if (!isset($agrupado[$nombreEquipo])) {
+                $agrupado[$nombreEquipo] = [];
+            }
+
+            $agrupado[$nombreEquipo][] = $plantilla;
+        }
 
         return Inertia::render('Guest/Jugadores/Index', [
-            'jugadores' => $jugadores,
+            'plantillasPorEquipo' => $agrupado,
         ]);
     }
 

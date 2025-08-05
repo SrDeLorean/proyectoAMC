@@ -22,28 +22,48 @@ const props = defineProps({
   }
 })
 
+// Videos YouTube Shorts con solo el ID
+const reels = [
+  { id: 'MOK5-u54r6E' },
+  { id: 'spQv-nzXINc' },
+  { id: 'bt7XatpAYq8' },
+  { id: 'MOK5-u54r6E' },
+  { id: 'spQv-nzXINc' },
+  { id: 'bt7XatpAYq8' }
+]
+
 function goToCompetencia(id) {
   router.get(route('competencias.show', id))
+}
+
+// Modal control para video agrandado
+const activeVideoId = ref(null)
+
+function openVideo(id) {
+  activeVideoId.value = id
+}
+
+function closeVideo() {
+  activeVideoId.value = null
 }
 </script>
 
 <template>
   <WelcomeLayout>
     <template #default>
-      <!-- Hero Section -->
+      <!-- Hero Section con texto más corto -->
       <section
         class="bg-gradient-to-br from-gray-900 via-black to-gray-800 text-gray-200 py-20 px-4 sm:px-6 md:px-12 text-center select-none max-w-7xl mx-auto"
       >
         <h1
-          class="text-5xl sm:text-6xl md:text-7xl font-extrabold mb-6 tracking-wide text-red-600 drop-shadow-[0_0_12px_rgba(220,38,38,0.8)] leading-tight"
+          class="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-4 tracking-wide text-red-600 drop-shadow-[0_0_12px_rgba(220,38,38,0.8)] leading-tight"
         >
           Comunidad AMC
         </h1>
         <p
-          class="max-w-xl sm:max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-gray-400 leading-relaxed mb-14 font-light"
+          class="max-w-lg mx-auto text-base sm:text-lg text-gray-400 leading-relaxed mb-12 font-light"
         >
-          Donde los jugadores se convierten en leyendas. Únete a nuestras competencias,
-          comparte tu pasión y forma parte de la comunidad gamer más poderosa de habla hispana.
+          Únete a nuestras competencias y forma parte de la comunidad gamer más fuerte de habla hispana.
         </p>
 
         <div
@@ -93,13 +113,11 @@ function goToCompetencia(id) {
               @click="goToCompetencia(competencia.id)"
               class="relative rounded-xl overflow-hidden shadow-lg transform transition duration-300 hover:scale-[1.03] hover:shadow-red-600 min-h-[280px]"
             >
-              <!-- Fondo con imagen oscurecida -->
               <div
                 class="absolute inset-0 bg-black bg-opacity-70"
                 :style="{ backgroundImage: `url(/${competencia.logo})`, backgroundSize: 'cover', backgroundPosition: 'center' }"
               ></div>
 
-              <!-- Overlay de color rojo en hover -->
               <div
                 class="absolute inset-0 bg-red-600 opacity-0 hover:opacity-30 transition-opacity duration-300 rounded-xl"
               ></div>
@@ -119,6 +137,73 @@ function goToCompetencia(id) {
           </SwiperSlide>
         </Swiper>
       </section>
+
+      <!-- Carrusel YouTube Shorts -->
+      <section class="max-w-7xl mx-auto my-20 px-4 sm:px-6 md:px-12">
+        <h2
+          class="text-3xl sm:text-4xl font-extrabold text-center text-red-600 mb-12 drop-shadow-[0_2px_8px_rgba(220,38,38,0.6)] tracking-wide"
+        >
+          Shorts Destacados
+        </h2>
+
+        <Swiper
+          :modules="[Navigation, Pagination]"
+          :slides-per-view="1"
+          :space-between="20"
+          navigation
+          pagination
+          :breakpoints="{
+            640: { slidesPerView: 2, spaceBetween: 24 },
+            1024: { slidesPerView: 3, spaceBetween: 32 }
+          }"
+          class="py-6 max-w-full touch-auto"
+        >
+          <SwiperSlide
+            v-for="(reel, index) in reels"
+            :key="index"
+            class="cursor-pointer flex justify-center"
+          >
+            <!-- Miniatura sin autoplay, audio ON -->
+            <iframe
+              class="rounded-xl shadow-lg"
+              width="320"
+              height="480"
+              :src="`https://www.youtube.com/embed/${reel.id}?rel=0&modestbranding=1&mute=0&autoplay=0`"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+              @click.prevent="openVideo(reel.id)"
+              style="pointer-events: auto;"
+            ></iframe>
+          </SwiperSlide>
+        </Swiper>
+      </section>
+
+      <!-- Modal video agrandado -->
+      <div
+        v-if="activeVideoId"
+        class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
+        @click.self="closeVideo"
+      >
+        <div
+          class="relative w-[90vw] max-w-[1280px] max-h-[90vh] aspect-video rounded-lg shadow-xl"
+        >
+          <button
+            class="absolute top-3 right-3 text-white text-4xl font-bold z-50 cursor-pointer select-none"
+            @click="closeVideo"
+            aria-label="Cerrar video"
+          >
+            &times;
+          </button>
+          <iframe
+            :src="`https://www.youtube.com/embed/${activeVideoId}?autoplay=1&rel=0&modestbranding=1&mute=0`"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            class="w-full h-full rounded-lg"
+          ></iframe>
+        </div>
+      </div>
 
       <!-- Twitch Stream Section -->
       <section
@@ -145,3 +230,15 @@ function goToCompetencia(id) {
     </template>
   </WelcomeLayout>
 </template>
+
+<style scoped>
+/* Evita que iframe bloquee clicks para abrir modal */
+.swiper-slide iframe {
+  pointer-events: none; /* Evita interferencia de iframe con Swiper */
+}
+
+.swiper-slide:hover iframe {
+  pointer-events: auto; /* Solo permite click cuando se está sobre miniatura */
+  cursor: pointer;
+}
+</style>

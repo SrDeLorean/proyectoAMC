@@ -72,4 +72,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(\App\Models\Plantilla::class, 'id_jugador');
     }
+
+    public function estadisticasJugador()
+    {
+        return $this->hasMany(EstadisticaJugador::class, 'id_jugador');
+    }
 }

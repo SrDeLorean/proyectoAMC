@@ -4,17 +4,30 @@ const props = defineProps({
     type: Object,
     default: () => ({}), // evita undefined
   },
+  colorEquipo: {
+    type: String,
+    default: '#dc2626', // rojo por defecto si no viene prop
+  },
 })
 
 // Función para mostrar valor o 'N/A' si no existe o es null/undefined
 function mostrarValor(valor) {
   return valor !== null && valor !== undefined && valor !== '' ? valor : 'N/A'
 }
+
+// Computed para sombra dinámica según colorEquipo
+const sombraColor = `0 0 3px ${props.colorEquipo}`
 </script>
 
 <template>
-  <div class="bg-gray-900 p-4 rounded-xl shadow-lg border border-red-600 max-w-md mx-auto">
-    <h2 class="text-red-600 text-xl font-bold mb-4 drop-shadow-[0_0_3px_#f00]">
+  <div
+    class="bg-gray-900 p-4 rounded-xl shadow-lg max-w-md mx-auto"
+    :style="{ border: `1px solid ${colorEquipo}` }"
+  >
+    <h2
+      class="text-xl font-bold mb-4"
+      :style="{ color: colorEquipo, textShadow: sombraColor }"
+    >
       Estadísticas del Equipo
     </h2>
     <div class="text-white space-y-2">

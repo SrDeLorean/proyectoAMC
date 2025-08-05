@@ -169,11 +169,12 @@ const esPantallaGrande = computed(() => windowWidth.value >= 768)
 
       <div>
         <PlantillaEquipo
-          v-if="activeTab === 'plantilla'"
-          :jugadores="plantilla"
-          :key="'plantilla'"
-          @irAlPerfil="irAlPerfil"
-        />
+            v-if="activeTab === 'plantilla'"
+            :jugadores="plantilla"
+            :colorEquipo="equipo.color_primario || '#ef4444'"
+            :key="'plantilla'"
+            @irAlPerfil="irAlPerfil"
+            />
 
         <component
           v-if="activeTab === 'alineacion'"

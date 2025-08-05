@@ -40,6 +40,21 @@ onBeforeUnmount(() => {
 })
 
 const esPantallaGrande = computed(() => windowWidth.value >= 768)
+
+const colorEquipo = computed(() => props.equipo?.color_primario || '#dc2626')
+
+function onMouseEnter(tab, event) {
+  if (activeTab.value !== tab) {
+    event.currentTarget.style.color = colorEquipo.value
+  }
+}
+function onMouseLeave(tab, event) {
+  if (activeTab.value !== tab) {
+    event.currentTarget.style.color = '#9ca3af'
+  }
+}
+
+const sombraActivo = computed(() => `0 0 8px ${colorEquipo.value}`)
 </script>
 
 <template>
@@ -75,67 +90,71 @@ const esPantallaGrande = computed(() => windowWidth.value >= 768)
       </div>
 
       <nav
-        class="flex overflow-x-auto no-scrollbar border-b border-gray-700 mb-6 -mx-4 px-4 sm:mx-0 sm:px-0"
+        class="flex overflow-x-auto no-scrollbar border-b mb-6 -mx-4 px-4 sm:mx-0 sm:px-0"
+        :style="{ borderColor: colorEquipo }"
         role="tablist"
         aria-label="Navegación de secciones"
       >
         <button
           @click="activeTab = 'plantilla'"
-          :class="[
-            'whitespace-nowrap py-2 px-4 font-semibold rounded-t',
-            activeTab === 'plantilla'
-              ? 'bg-red-600 text-white shadow'
-              : 'text-gray-400 hover:text-red-600 hover:border-b-2 hover:border-red-600'
-          ]"
           type="button"
           role="tab"
           :aria-selected="activeTab === 'plantilla'"
           tabindex="0"
+          :style="activeTab === 'plantilla'
+            ? { backgroundColor: colorEquipo, color: 'white', boxShadow: sombraActivo }
+            : { color: '#9ca3af', borderBottom: '2px solid transparent' }"
+          @mouseenter="(e) => onMouseEnter('plantilla', e)"
+          @mouseleave="(e) => onMouseLeave('plantilla', e)"
+          class="whitespace-nowrap py-2 px-4 font-semibold rounded-t"
         >
           Plantilla
         </button>
+
         <button
           @click="activeTab = 'alineacion'"
-          :class="[
-            'whitespace-nowrap py-2 px-4 font-semibold rounded-t',
-            activeTab === 'alineacion'
-              ? 'bg-red-600 text-white shadow'
-              : 'text-gray-400 hover:text-red-600 hover:border-b-2 hover:border-red-600'
-          ]"
           type="button"
           role="tab"
           :aria-selected="activeTab === 'alineacion'"
           tabindex="-1"
+          :style="activeTab === 'alineacion'
+            ? { backgroundColor: colorEquipo, color: 'white', boxShadow: sombraActivo }
+            : { color: '#9ca3af', borderBottom: '2px solid transparent' }"
+          @mouseenter="(e) => onMouseEnter('alineacion', e)"
+          @mouseleave="(e) => onMouseLeave('alineacion', e)"
+          class="whitespace-nowrap py-2 px-4 font-semibold rounded-t"
         >
           Alineación
         </button>
+
         <button
           @click="activeTab = 'estadisticaEquipo'"
-          :class="[
-            'whitespace-nowrap py-2 px-4 font-semibold rounded-t',
-            activeTab === 'estadisticaEquipo'
-              ? 'bg-red-600 text-white shadow'
-              : 'text-gray-400 hover:text-red-600 hover:border-b-2 hover:border-red-600'
-          ]"
           type="button"
           role="tab"
           :aria-selected="activeTab === 'estadisticaEquipo'"
           tabindex="-1"
+          :style="activeTab === 'estadisticaEquipo'
+            ? { backgroundColor: colorEquipo, color: 'white', boxShadow: sombraActivo }
+            : { color: '#9ca3af', borderBottom: '2px solid transparent' }"
+          @mouseenter="(e) => onMouseEnter('estadisticaEquipo', e)"
+          @mouseleave="(e) => onMouseLeave('estadisticaEquipo', e)"
+          class="whitespace-nowrap py-2 px-4 font-semibold rounded-t"
         >
           Estadística Equipo
         </button>
+
         <button
           @click="activeTab = 'estadisticaJugadores'"
-          :class="[
-            'whitespace-nowrap py-2 px-4 font-semibold rounded-t',
-            activeTab === 'estadisticaJugadores'
-              ? 'bg-red-600 text-white shadow'
-              : 'text-gray-400 hover:text-red-600 hover:border-b-2 hover:border-red-600'
-          ]"
           type="button"
           role="tab"
           :aria-selected="activeTab === 'estadisticaJugadores'"
           tabindex="-1"
+          :style="activeTab === 'estadisticaJugadores'
+            ? { backgroundColor: colorEquipo, color: 'white', boxShadow: sombraActivo }
+            : { color: '#9ca3af', borderBottom: '2px solid transparent' }"
+          @mouseenter="(e) => onMouseEnter('estadisticaJugadores', e)"
+          @mouseleave="(e) => onMouseLeave('estadisticaJugadores', e)"
+          class="whitespace-nowrap py-2 px-4 font-semibold rounded-t"
         >
           Estadística Jugador
         </button>
@@ -145,6 +164,7 @@ const esPantallaGrande = computed(() => windowWidth.value >= 768)
         <PlantillaEquipo
           v-if="activeTab === 'plantilla'"
           :jugadores="plantilla"
+          :colorEquipo="colorEquipo"
           :key="'plantilla'"
         />
 
@@ -153,18 +173,21 @@ const esPantallaGrande = computed(() => windowWidth.value >= 768)
           :is="esPantallaGrande ? FormacionCanchaHorizontal : FormacionCanchaVertical"
           :formacion="equipo?.formacion?.nombre"
           :plantilla="plantilla"
+          :colorEquipo="colorEquipo"
           :key="esPantallaGrande ? 'alineacion-horizontal' : 'alineacion-vertical'"
         />
 
         <EstadisticaEquipo
           v-if="activeTab === 'estadisticaEquipo'"
           :estadistica="estadistica_equipo"
+          :colorEquipo="colorEquipo"
           :key="'estadisticaEquipo'"
         />
 
         <EstadisticaJugadores
           v-if="activeTab === 'estadisticaJugadores'"
           :jugadores="plantilla"
+          :colorEquipo="colorEquipo"
           :key="'estadisticaJugadores'"
         />
       </div>

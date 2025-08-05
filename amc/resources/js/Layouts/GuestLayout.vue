@@ -34,6 +34,8 @@ const showingNavigationDropdown = ref(false)
               <Link :href="route('competencias.index')" class="hover:text-red-500 transition">Competencias AMC</Link>
               <Link :href="route('equipos.index')" class="hover:text-red-500 transition">Equipos</Link>
               <Link :href="route('jugadores.index')" class="hover:text-red-500 transition">Jugadores</Link>
+              <Link :href="route('estadisticas.index')" class="hover:text-red-500 transition">Estadisticas</Link>
+
             </div>
           </div>
 
@@ -97,6 +99,7 @@ const showingNavigationDropdown = ref(false)
           <Link :href="route('competencias.index')" class="block hover:text-red-500 transition">Competencias AMC</Link>
           <Link :href="route('equipos.index')" class="block hover:text-red-500 transition">Equipos</Link>
           <Link :href="route('jugadores.index')" class="block hover:text-red-500 transition">Jugadores</Link>
+          <Link :href="route('estadisticas.index')" class="block hover:text-red-500 transition">Estadisticas</Link>
 
           <!-- Social Icons -->
           <div class="flex space-x-5 pt-4 text-xl border-t border-gray-700">
